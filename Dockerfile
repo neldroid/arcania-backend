@@ -1,7 +1,7 @@
-FROM gradle:7-jdk11 AS build
-COPY --chown=gradle:gradle . /home/gradle/src
+FROM eclipse-temurin:11-jdk AS build
 WORKDIR /home/gradle/src
-RUN gradle buildFatJar --no-daemon
+COPY . .
+RUN ./gradlew buildFatJar --no-daemon
 
 FROM eclipse-temurin:11-jre
 EXPOSE 8080
