@@ -8,6 +8,10 @@ plugins {
 group = "com.ezepiko"
 version = "1.0-SNAPSHOT"
 
+application {
+    mainClass.set("AppKt")
+}
+
 repositories {
     mavenCentral()
 }
@@ -25,7 +29,7 @@ dependencies {
 }
 
 kotlin {
-    jvmToolchain(25)
+    jvmToolchain(21)
 }
 
 tasks.test {
