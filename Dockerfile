@@ -1,5 +1,5 @@
 FROM gradle:7-jdk11 AS build
-COPY --chown=gradle:gradle . /home/gradle/src
+COPY --chown=gradle:gradle src/main /home/gradle/src
 WORKDIR /home/gradle/src
 RUN gradle buildFatJar --no-daemon
 
