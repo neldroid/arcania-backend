@@ -2,6 +2,7 @@ package api.routes
 
 import api.routes.request.ReadTarotRequest
 import api.routes.request.UserReadingRequest
+import api.routes.response.ReadTarotResponse
 import common.model.tarot.LLMTarotRead
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -33,7 +34,7 @@ fun Route.bffRoutes() {
                 contentType(ContentType.Application.Json)
                 setBody(
                     ReadTarotRequest(
-                        userId = "User ID",
+                        userId = userRequest.userId,
                         userName = userRequest.userName ?: "",
                         cardsQuantity = userRequest.cardsQuantity,
                         question = userRequest.question,
@@ -43,7 +44,7 @@ fun Route.bffRoutes() {
                 )
             }
 
-            val reading = internalResponse.body<LLMTarotRead>()
+            val reading = internalResponse.body<ReadTarotResponse>()
             call.respond(HttpStatusCode.OK, reading)
         }
     }

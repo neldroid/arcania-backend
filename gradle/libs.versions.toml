@@ -11,6 +11,8 @@ kotlinxCoroutines = "1.10.2"
 koin = "4.1.0"
 ksp = "2.2.21-2.0.5"
 koog = "0.6.2"
+firebaseAdmin = "9.8.0"
+firestore = "26.1.2"
 
 [libraries]
 kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
@@ -45,12 +47,15 @@ koinCore = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koinKtor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
 koinLogger = { module = "io.insert-koin:koin-logger-slf4j", version.ref = "koin" }
 
+firebaseAdmin = { module = "com.google.firebase:firebase-admin", version.ref = "firebaseAdmin" }
+firebaseFirestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firestore" }
 [bundles]
 kotlinxEcosystem = ["kotlinxSerialization", "kotlinxCoroutines"]
 databaseEcosystem = ["postgresql", "h2", "exposedCore", "exposedJdbc", "exposedDao", "exposedDatetime"]
 ktorEcosystem = ["ktorServerCore", "ktorSerializationKotlinxJson", "ktorServerContentNegotiation", "ktorServerHostCommon", "ktorServerStatusPages", "ktorServerNetty", "ktorServerConfigYaml", "logbackClassic", "ktorClientCore", "ktorClientContent", "ktorRequestValidation"]
 koogEcosystem = ["koogAgents", "koogTools", "koogFeatureEventHandler"]
 koinEcosystem = ["koinCore", "koinKtor", "koinLogger"]
+firebaseEcosystem = ["firebaseAdmin"]
 
 [plugins]
 kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

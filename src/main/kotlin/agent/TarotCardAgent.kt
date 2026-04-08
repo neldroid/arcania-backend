@@ -4,7 +4,6 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
-import common.model.tarot.TarotReading
 import domain.tarot.TarotCard
 
 object TarotReadingAgent {
@@ -15,7 +14,7 @@ object TarotReadingAgent {
         cards: List<TarotCard>,
         emotions: List<String>,
         themes: List<String>,
-        previousReadings: List<TarotReading>
+        previousReadings: List<String>
     ): String {
         val geminiApiKey = System.getenv("GEMINI_API_KEY") ?: error("Missing env var: GEMINI_API_KEY")
 
@@ -41,10 +40,10 @@ object TarotReadingAgent {
             4. Guidance: Offer reflective perspectives, not commands.
             
             ## Output Format (STRICT)
-            Return ONLY the raw JSON object. 
-            - DO NOT use markdown code blocks (e.g., no ```json).
-            - DO NOT include any preamble or postscript.
-            - Start output with '{' and end with '}'.
+            - Return ONLY the JSON object.
+            - NO preamble, NO postscript, NO "R-I" blocks, and NO explanations of your reasoning.
+            - If you have internal reasoning, do NOT include it in the output.
+            - The output must start with '{' and end with '}'.
             
             {
               "opening": "Contextual greeting and initial reflection on the query.",
@@ -97,7 +96,7 @@ object TarotReadingAgent {
 
             // Previous Readings - Keep only the core theme to save tokens
             if (previousReadings.isNotEmpty()) {
-                appendLine("History: ${previousReadings.joinToString(" / ") { it.answer.take(100) + "..." }}")
+                appendLine("History: ${previousReadings.joinToString(" | ")}")
             }
 
             appendLine("\n### SPREAD_DATA")

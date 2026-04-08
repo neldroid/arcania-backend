@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.bundles.koinEcosystem)
     implementation(libs.bundles.databaseEcosystem)
     implementation(libs.bundles.koogEcosystem)
+    implementation(libs.bundles.firebaseEcosystem)
 
     testImplementation(kotlin("test"))
 }

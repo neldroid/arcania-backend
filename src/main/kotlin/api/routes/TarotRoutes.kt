@@ -2,6 +2,7 @@ package api.routes
 
 import api.ApiKeyAuthPlugin
 import api.routes.request.ReadTarotRequest
+import api.routes.response.ReadTarotResponse
 import domain.tarot.TarotService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -20,7 +21,7 @@ fun Route.tarotRoutes() {
         get {
             val request = call.receive<ReadTarotRequest>()
 
-            val reading = tarotService.retrieveTarotReading(
+            val readingId = tarotService.retrieveTarotReading(
                 userId = request.userId,
                 userName = request.userName,
                 cardsQuantity = request.cardsQuantity,
@@ -29,7 +30,7 @@ fun Route.tarotRoutes() {
                 emotions = request.emotions,
             )
 
-            call.respond(HttpStatusCode.OK, reading)
+            call.respond(HttpStatusCode.OK, ReadTarotResponse(readingId))
         }
     }
 }
