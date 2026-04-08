@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlinPluginSerialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.shadow)
 }
 
 group = "com.ezepiko"
@@ -33,6 +34,22 @@ kotlin {
     jvmToolchain(21)
 }
 
+tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+    mergeServiceFiles()
+
+    mergeServiceFiles("META-INF/services")
+    mergeServiceFiles("META-INF/io.netty.versions.properties")
+    append("META-INF/spring.handlers")
+    append("META-INF/spring.schemas")
+    manifest {
+        attributes["Main-Class"] = "com.ezepiko.AppKt"
+    }
+}
+
+// Make the standard 'build' task also produce the shadow jar
+tasks.build {
+    dependsOn(tasks.shadowJar)
+}
 tasks.test {
     useJUnitPlatform()
 }
