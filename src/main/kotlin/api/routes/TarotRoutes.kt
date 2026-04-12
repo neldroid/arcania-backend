@@ -4,14 +4,14 @@ import api.ApiKeyAuthPlugin
 import api.routes.request.ReadTarotRequest
 import api.routes.response.ReadTarotResponse
 import domain.tarot.TarotService
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receive
-import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.route
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
+import java.util.*
 
 fun Route.tarotRoutes() {
     val tarotService by inject<TarotService>()
@@ -21,16 +21,26 @@ fun Route.tarotRoutes() {
         get {
             val request = call.receive<ReadTarotRequest>()
 
-            val readingId = tarotService.retrieveTarotReading(
-                userId = request.userId,
-                userName = request.userName,
-                cardsQuantity = request.cardsQuantity,
-                question = request.question,
-                themes = request.themes,
-                emotions = request.emotions,
-            )
+            val readingId = UUID.randomUUID()
+            coroutineScope {
+                launch {
+                    try {
+                        tarotService.retrieveTarotReading(
+                            readingId = readingId,
+                            userId = request.userId,
+                            userName = request.userName,
+                            cardsQuantity = request.cardsQuantity,
+                            question = request.question,
+                            themes = request.themes,
+                            emotions = request.emotions,
+                        )
+                    } catch (exception: Exception) {
+                        println("Background processing failed: ${exception.message}")
+                    }
+                }
 
-            call.respond(HttpStatusCode.OK, ReadTarotResponse(readingId))
+                call.respond(HttpStatusCode.Accepted, ReadTarotResponse(readingId.toString()))
+            }
         }
     }
 }

@@ -21,17 +21,16 @@ class TarotService(
      * @return the created reading ID
      */
     suspend fun retrieveTarotReading(
+        readingId: UUID,
         userId: String,
         userName: String,
         cardsQuantity: Int,
         question: String,
         themes: List<String>,
         emotions: List<String>
-    ): String {
+    ) {
         // 1) Get the previous readings for the userId
         val previousReadings: List<String> = tarotReadingRepository.getLastReadingSummaries(userId)
-
-        println("PREVIOUS READINGS: $previousReadings")
 
         // 2) Get the card/s for this session
         val cards: List<TarotCard> = TarotCardHelper.getCards(cardsQuantity)
@@ -45,16 +44,12 @@ class TarotService(
             throw IllegalStateException("Failed to parse LLM response: $read", e)
         }
 
-        val readingId = UUID.randomUUID()
-
         // 4) Save the result in firebase
         tarotReadingRepository.addReading(
             userId = userId,
             readingId = readingId.toString(),
             reading = parsed
         )
-
-        return readingId.toString()
     }
 
     private fun sanitizeJson(rawResponse: String): String {
