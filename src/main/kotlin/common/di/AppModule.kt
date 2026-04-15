@@ -6,6 +6,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.cloud.FirestoreClient
 import data.firebase.TarotReadingRepository
+import data.firebase.UserRepository
 import domain.tarot.TarotService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -66,10 +67,11 @@ val appModule = module {
     Ex.: single<Repository> {RepositoryImpl()}
     */
     single { TarotReadingRepository(get<Firestore>()) }
+    single { UserRepository(get<Firestore>()) }
     /* Add use cases injection
     Ex.: single { UseCase() }
      */
-    single { TarotService(get<TarotReadingRepository>()) }
+    single { TarotService(get<TarotReadingRepository>(), get<UserRepository>()) }
 
     /* Add Notifiers
     Ex.: single { Notifier() }

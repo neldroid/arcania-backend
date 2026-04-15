@@ -4,5 +4,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ReadTarotResponse(
-    val readingId: String,
+    val responseId: ResponseType,
+    val readingId: String? = null,
 )
+
+
+enum class ResponseType {
+    SUCCESS, ERROR
+}

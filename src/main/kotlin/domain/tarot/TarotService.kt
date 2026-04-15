@@ -3,11 +3,13 @@ package domain.tarot
 import agent.TarotReadingAgent
 import common.model.tarot.LLMTarotRead
 import data.firebase.TarotReadingRepository
+import data.firebase.UserRepository
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
 class TarotService(
-    private val tarotReadingRepository: TarotReadingRepository
+    private val tarotReadingRepository: TarotReadingRepository,
+    private val userRepository: UserRepository,
 ) {
 
     /**
@@ -21,6 +23,25 @@ class TarotService(
      * @return the created reading ID
      */
     suspend fun retrieveTarotReading(
+        readingId: UUID,
+        userId: String,
+        userName: String,
+        cardsQuantity: Int,
+        question: String,
+        themes: List<String>,
+        emotions: List<String>
+    ) {
+        // 0) Get the available readings for the user
+        val availableReadings = userRepository.findUser(userId)?.tarot?.readingsAmount ?: 0
+
+        if (availableReadings == 0) {
+            throw IllegalStateException("Not enough readings left")
+        } else {
+            readTarot(readingId, userId, userName, cardsQuantity, question, themes, emotions)
+        }
+    }
+
+    private suspend fun readTarot(
         readingId: UUID,
         userId: String,
         userName: String,

@@ -1,5 +1,6 @@
 package data.firebase
 
+import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.Firestore
 import common.model.tarot.LLMTarotRead
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +13,12 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
 ) {
 
     suspend fun addReading(userId: String, readingId: String, reading: LLMTarotRead) = withContext(Dispatchers.IO) {
+        // 1) Add the reading
         subCollection(userId, "readings").document(readingId).set(reading)
+        // 2) Discount a read
+        update(userId, mapOf(
+            "tarot.readingsAmount" to FieldValue.increment(-1),
+        ))
     }
 
     suspend fun getLastReadingSummaries(userId: String, limit: Int = 3): List<String> = withContext(Dispatchers.IO) {

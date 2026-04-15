@@ -3,6 +3,7 @@ package api.routes
 import api.ApiKeyAuthPlugin
 import api.routes.request.ReadTarotRequest
 import api.routes.response.ReadTarotResponse
+import api.routes.response.ResponseType
 import domain.tarot.TarotService
 import io.ktor.http.*
 import io.ktor.server.request.*
@@ -21,9 +22,10 @@ fun Route.tarotRoutes() {
         get {
             val request = call.receive<ReadTarotRequest>()
 
-            val readingId = UUID.randomUUID()
             coroutineScope {
                 launch {
+                    val readingId = UUID.randomUUID()
+
                     try {
                         tarotService.retrieveTarotReading(
                             readingId = readingId,
@@ -34,12 +36,17 @@ fun Route.tarotRoutes() {
                             themes = request.themes,
                             emotions = request.emotions,
                         )
+
+                        call.respond(
+                            HttpStatusCode.Accepted,
+                            ReadTarotResponse(responseId = ResponseType.SUCCESS, readingId.toString())
+                        )
                     } catch (exception: Exception) {
+                        call.respond(HttpStatusCode.NotAcceptable, ReadTarotResponse(responseId = ResponseType.ERROR))
                         println("Background processing failed: ${exception.message}")
                     }
                 }
 
-                call.respond(HttpStatusCode.Accepted, ReadTarotResponse(readingId.toString()))
             }
         }
     }
