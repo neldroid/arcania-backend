@@ -4,6 +4,10 @@ import agent.TarotReadingAgent
 import common.model.tarot.LLMTarotRead
 import data.firebase.TarotReadingRepository
 import data.firebase.UserRepository
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
@@ -65,11 +69,16 @@ class TarotService(
             throw IllegalStateException("Failed to parse LLM response: $read", e)
         }
 
-        // 4) Save the result in firebase
+        // 4) Add the createdAt date
+        val llmTarotRead = parsed.copy(
+            createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        )
+
+        // 5) Save the result in firebase
         tarotReadingRepository.addReading(
             userId = userId,
             readingId = readingId.toString(),
-            reading = parsed
+            reading = llmTarotRead,
         )
     }
 
