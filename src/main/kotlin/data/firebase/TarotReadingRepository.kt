@@ -6,6 +6,15 @@ import com.google.cloud.firestore.Firestore
 import common.model.tarot.LLMTarotRead
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimePeriod
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTarotRead>(
     firestore = firestore,
@@ -19,8 +28,17 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
         // 2) Discount a read
         update(userId, mapOf(
             "tarot.readingsAmount" to FieldValue.increment(-1),
-            "tarot.nextFreeReadingAt" to Timestamp.now(),
+            "tarot.nextFreeReadingAt" to nextFreeReadingDate(),
         ))
+    }
+
+    private fun nextFreeReadingDate(): Timestamp {
+        val tomorrowInstant = Clock.System.now().plus(1, DateTimeUnit.DAY, TimeZone.UTC)
+        val tomorrowDate = tomorrowInstant.toLocalDateTime(TimeZone.UTC).date
+        val tomorrowMidnight = LocalDateTime(tomorrowDate, LocalTime(0, 0, 0))
+
+        val resultInstant = tomorrowMidnight.toInstant(TimeZone.UTC)
+        return Timestamp.ofTimeSecondsAndNanos(resultInstant.epochSeconds, 0)
     }
 
     suspend fun getLastReadingSummaries(userId: String, limit: Int = 3): List<String> = withContext(Dispatchers.IO) {
