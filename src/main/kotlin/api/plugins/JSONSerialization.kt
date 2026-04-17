@@ -1,7 +1,6 @@
 package api.plugins
 
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.serializers.LocalDateTimeIso8601Serializer
+import com.google.cloud.Timestamp
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -15,7 +14,7 @@ import java.util.*
 val appJson = Json {
     serializersModule = SerializersModule {
         contextual(UUID::class, UUIDSerializer)
-        contextual(LocalDateTime::class, LocalDateTimeIso8601Serializer)
+        contextual(Timestamp::class, TimeStampSerializer)
     }
     encodeDefaults = true
     ignoreUnknownKeys = true
@@ -31,5 +30,18 @@ object UUIDSerializer : KSerializer<UUID> {
 
     override fun deserialize(decoder: Decoder): UUID {
         return UUID.fromString(decoder.decodeString())
+    }
+}
+
+object TimeStampSerializer : KSerializer<Timestamp> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("Timestamp", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: Timestamp) {
+        encoder.encodeString(value.toString()) // Saves as ISO-8601 string
+    }
+
+    override fun deserialize(decoder: Decoder): Timestamp {
+        return Timestamp.parseTimestamp(decoder.decodeString())
     }
 }

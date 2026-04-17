@@ -1,13 +1,10 @@
 package domain.tarot
 
 import agent.TarotReadingAgent
+import com.google.cloud.Timestamp
 import common.model.tarot.LLMTarotRead
 import data.firebase.TarotReadingRepository
 import data.firebase.UserRepository
-import kotlinx.datetime.Clock
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
 import java.util.UUID
 
@@ -71,7 +68,7 @@ class TarotService(
 
         // 4) Add the createdAt date
         val llmTarotRead = parsed.copy(
-            createdAt = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+            createdAt = Timestamp.now()
         )
 
         // 5) Save the result in firebase

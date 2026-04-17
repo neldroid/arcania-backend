@@ -1,6 +1,6 @@
 package common.model.tarot
 
-import kotlinx.datetime.LocalDateTime
+import com.google.cloud.Timestamp
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -12,7 +12,7 @@ data class LLMTarotRead(
     val synthesis: String = "",
     val guidance: String = "",
     val summary: String = "",
-    @Contextual val createdAt: LocalDateTime? = null,
+    @Contextual val createdAt: Timestamp? = null,
 )
 
 @Serializable

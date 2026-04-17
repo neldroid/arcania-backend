@@ -1,16 +1,11 @@
 package data.firebase
 
+import com.google.cloud.Timestamp
 import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.Firestore
 import common.model.tarot.LLMTarotRead
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimePeriod
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 
 class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTarotRead>(
     firestore = firestore,
@@ -24,7 +19,7 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
         // 2) Discount a read
         update(userId, mapOf(
             "tarot.readingsAmount" to FieldValue.increment(-1),
-            "tarot.nextFreeReadingAt" to Clock.System.now().plus(DateTimePeriod(days = 1), TimeZone.UTC).toLocalDateTime(TimeZone.UTC),
+            "tarot.nextFreeReadingAt" to Timestamp.now(),
         ))
     }
 
