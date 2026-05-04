@@ -1,5 +1,6 @@
 import api.plugins.configureRouting
 import api.plugins.configureSerialization
+import api.routes.request.InterpretDreamRequest
 import api.routes.request.ReadTarotRequest
 import common.di.appModule
 import io.ktor.http.HttpStatusCode
@@ -39,6 +40,17 @@ fun Application.module() {
             }
             if (request.question.isBlank()) {
                 errors.add("question is required and cannot be empty")
+            }
+
+            if (errors.isEmpty()) ValidationResult.Valid
+            else ValidationResult.Invalid(errors.joinToString(", "))
+        }
+
+        validate<InterpretDreamRequest> { request ->
+            val errors = mutableListOf<String>()
+
+            if (request.dreamDescription.isBlank()) {
+                errors.add("dreamDescription is required and cannot be empty")
             }
 
             if (errors.isEmpty()) ValidationResult.Valid
