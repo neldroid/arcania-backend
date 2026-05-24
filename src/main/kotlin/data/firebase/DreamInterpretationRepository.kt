@@ -1,5 +1,7 @@
 package data.firebase
 
+import com.google.cloud.Timestamp
+import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.Firestore
 import common.model.dream.LLMDreamInterpretation
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +19,11 @@ class DreamInterpretationRepository(firestore: Firestore) : FirestoreRepository<
         interpretation: LLMDreamInterpretation,
     ) = withContext(Dispatchers.IO) {
         subCollection(userId, "dreams").document(interpretationId).set(interpretation)
+
+        update(userId, mapOf(
+            "dream.readingsAmount" to FieldValue.increment(-1),
+            "dream.nextFreeReadingAt" to nextFreeReadingDate(),
+        ))
     }
 
     suspend fun getLastInterpretationSummaries(userId: String, limit: Int = 3): List<String> =
@@ -27,4 +34,5 @@ class DreamInterpretationRepository(firestore: Firestore) : FirestoreRepository<
                 .documents
                 .mapNotNull { it.toObject(LLMDreamInterpretation::class.java).summary }
         }
+
 }

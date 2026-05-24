@@ -32,15 +32,6 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
         ))
     }
 
-    private fun nextFreeReadingDate(): Timestamp {
-        val tomorrowInstant = Clock.System.now().plus(1, DateTimeUnit.DAY, TimeZone.UTC)
-        val tomorrowDate = tomorrowInstant.toLocalDateTime(TimeZone.UTC).date
-        val tomorrowMidnight = LocalDateTime(tomorrowDate, LocalTime(0, 0, 0))
-
-        val resultInstant = tomorrowMidnight.toInstant(TimeZone.UTC)
-        return Timestamp.ofTimeSecondsAndNanos(resultInstant.epochSeconds, 0)
-    }
-
     suspend fun getLastReadingSummaries(userId: String, limit: Int = 3): List<String> = withContext(Dispatchers.IO) {
         subCollection(userId, "readings")
             .limit(limit)

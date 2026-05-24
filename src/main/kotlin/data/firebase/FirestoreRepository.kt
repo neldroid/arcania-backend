@@ -1,8 +1,17 @@
 package data.firebase
 
+import com.google.cloud.Timestamp
 import com.google.cloud.firestore.Firestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 abstract class FirestoreRepository<T> (
     protected val firestore: Firestore,
@@ -40,4 +49,14 @@ abstract class FirestoreRepository<T> (
     // Access a subcollection under a specific document
     protected fun subCollection(documentId: String, subCollectionName: String) =
         collection.document(documentId).collection(subCollectionName)
+}
+
+
+fun nextFreeReadingDate(): Timestamp {
+    val tomorrowInstant = Clock.System.now().plus(1, DateTimeUnit.DAY, TimeZone.UTC)
+    val tomorrowDate = tomorrowInstant.toLocalDateTime(TimeZone.UTC).date
+    val tomorrowMidnight = LocalDateTime(tomorrowDate, LocalTime(0, 0, 0))
+
+    val resultInstant = tomorrowMidnight.toInstant(TimeZone.UTC)
+    return Timestamp.ofTimeSecondsAndNanos(resultInstant.epochSeconds, 0)
 }
