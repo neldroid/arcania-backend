@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.bundles.databaseEcosystem)
     implementation(libs.bundles.koogEcosystem)
     implementation(libs.bundles.firebaseEcosystem)
+    implementation(libs.stripe)
 
     testImplementation(kotlin("test"))
 }

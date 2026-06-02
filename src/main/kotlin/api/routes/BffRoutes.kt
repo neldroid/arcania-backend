@@ -46,6 +46,17 @@ fun Route.bffRoutes() {
             val reading = internalResponse.body<ReadTarotResponse>()
             call.respond(HttpStatusCode.OK, reading)
         }
+
+        post("/key") {
+            // Reading for the "KEY" pay Tarot
+            val userRequest = call.receive<UserReadingRequest>()
+
+//            val internalResponse = httpClient.get("http://localhost:8080/read-cards") {
+//                header("X-Api-Key", System.getenv("TAROT_API_KEY"))
+//                contentType(ContentType.Application.Json)
+//                setBody()
+//            }
+        }
     }
 
     route("/dream") {

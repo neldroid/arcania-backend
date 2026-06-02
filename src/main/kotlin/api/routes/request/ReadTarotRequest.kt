@@ -11,3 +11,11 @@ data class ReadTarotRequest(
     val emotions: List<String>,
     val cardsQuantity: Int,
 )
+
+
+@Serializable
+data class ReadTarotKeyRequest(
+    val userId: String,
+    val userName: String,
+    val question: String,
+)

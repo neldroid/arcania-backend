@@ -13,6 +13,7 @@ ksp = "2.2.21-2.0.5"
 koog = "0.6.2"
 firebaseAdmin = "9.8.0"
 firestore = "26.1.2"
+stripe = "29.1.0"
 shadow = "8.3.10"
 
 [libraries]
@@ -50,6 +51,7 @@ koinLogger = { module = "io.insert-koin:koin-logger-slf4j", version.ref = "koin"
 
 firebaseAdmin = { module = "com.google.firebase:firebase-admin", version.ref = "firebaseAdmin" }
 firebaseFirestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firestore" }
+stripe = { module = "com.stripe:stripe-java", version.ref = "stripe" }
 [bundles]
 kotlinxEcosystem = ["kotlinxSerialization", "kotlinxCoroutines"]
 databaseEcosystem = ["postgresql", "h2", "exposedCore", "exposedJdbc", "exposedDao", "exposedDatetime"]
