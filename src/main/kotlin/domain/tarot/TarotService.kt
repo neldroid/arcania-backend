@@ -30,7 +30,8 @@ class TarotService(
         cardsQuantity: Int,
         question: String,
         themes: List<String>,
-        emotions: List<String>
+        emotions: List<String>,
+        isForAnotherPerson: Boolean = false,
     ) {
         // 0) Get the available readings for the user
         val availableReadings = userRepository.findUser(userId)?.tarot?.readingsAmount ?: 0
@@ -38,7 +39,7 @@ class TarotService(
         if (availableReadings == 0) {
             throw IllegalStateException("Not enough readings left")
         } else {
-            readTarot(readingId, userId, userName, cardsQuantity, question, themes, emotions)
+            readTarot(readingId, userId, userName, cardsQuantity, question, themes, emotions, isForAnotherPerson)
         }
     }
 
@@ -49,10 +50,12 @@ class TarotService(
         cardsQuantity: Int,
         question: String,
         themes: List<String>,
-        emotions: List<String>
+        emotions: List<String>,
+        isForAnotherPerson: Boolean = false,
     ) {
-        // 1) Get the previous readings for the userId
-        val previousReadings: List<String> = tarotReadingRepository.getLastReadingSummaries(userId)
+        // 1) Get the previous readings for the userId (skip if reading is for another person)
+        val previousReadings: List<String> = if (isForAnotherPerson) emptyList()
+        else tarotReadingRepository.getLastReadingSummaries(userId)
 
         // 2) Get the card/s for this session
         val cards: List<TarotCard> = TarotCardHelper.getCards(cardsQuantity)

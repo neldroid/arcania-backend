@@ -10,6 +10,7 @@ data class ReadTarotRequest(
     val themes: List<String>,
     val emotions: List<String>,
     val cardsQuantity: Int,
+    val isForAnotherPerson: Boolean = false,
 )
 
 

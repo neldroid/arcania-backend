@@ -10,4 +10,5 @@ data class UserReadingRequest(
     val question: String,
     val themes: List<String>? = null,
     val emotions: List<String>? = null,
+    val isForAnotherPerson: Boolean = false,
 )

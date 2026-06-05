@@ -19,15 +19,12 @@ import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import java.io.ByteArrayInputStream
 
-private fun loadFirebaseCredentials(): GoogleCredentials? {
+private fun loadFirebaseCredentials(): GoogleCredentials {
     val serviceAccountJson = System.getenv("FIREBASE_SERVICE_ACCOUNT")
-    return if (serviceAccountJson != null) {
-        GoogleCredentials.fromStream(
-            ByteArrayInputStream(serviceAccountJson.toByteArray())
-        )
-    } else {
-        null
-    }
+        ?: error("FIREBASE_SERVICE_ACCOUNT environment variable is not set")
+    return GoogleCredentials.fromStream(
+        ByteArrayInputStream(serviceAccountJson.toByteArray())
+    )
 }
 
 val appModule = module {

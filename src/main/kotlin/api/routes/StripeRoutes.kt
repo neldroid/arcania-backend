@@ -31,10 +31,21 @@ fun Route.stripeRoutes() {
             if (event.type == "checkout.session.completed") {
                 val session = event.dataObjectDeserializer.`object`.orElse(null) as? Session
                 val userId = session?.metadata?.get("userId")
+                val productType = session?.metadata?.get("productType")
                 val readingId = session?.metadata?.get("readingId")
 
-                if (userId != null && readingId != null) {
-                    userRepository.update(userId, mapOf("tarot.readings" to FieldValue.arrayUnion(readingId)))
+                if (userId != null) {
+                    when (productType) {
+                        "tarot" -> if (readingId != null) {
+                            userRepository.update(userId, mapOf("tarot.readings" to FieldValue.arrayUnion(readingId)))
+                        }
+                        "reiki" -> {
+                            userRepository.update(userId, mapOf("reiki.appointmentsAmount" to FieldValue.increment(1)))
+                        }
+                        "dream" -> {
+                            userRepository.update(userId, mapOf("dream.readings" to FieldValue.arrayUnion("dream")))
+                        }
+                    }
                 }
             }
 

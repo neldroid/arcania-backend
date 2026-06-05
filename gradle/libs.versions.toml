@@ -33,6 +33,7 @@ ktorServerContentNegotiation = { module = "io.ktor:ktor-server-content-negotiati
 ktorServerHostCommon = { module = "io.ktor:ktor-server-host-common", version.ref = "ktor" }
 ktorServerStatusPages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 ktorRequestValidation = { module = "io.ktor:ktor-server-request-validation", version.ref = "ktor" }
+ktorRateLimit = { module = "io.ktor:ktor-server-rate-limit", version.ref = "ktor" }
 ktorServerNetty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktorServerConfigYaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 logbackClassic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
@@ -55,7 +56,7 @@ stripe = { module = "com.stripe:stripe-java", version.ref = "stripe" }
 [bundles]
 kotlinxEcosystem = ["kotlinxSerialization", "kotlinxCoroutines"]
 databaseEcosystem = ["postgresql", "h2", "exposedCore", "exposedJdbc", "exposedDao", "exposedDatetime"]
-ktorEcosystem = ["ktorServerCore", "ktorSerializationKotlinxJson", "ktorServerContentNegotiation", "ktorServerHostCommon", "ktorServerStatusPages", "ktorServerNetty", "ktorServerConfigYaml", "logbackClassic", "ktorClientCore", "ktorClientContent", "ktorRequestValidation"]
+ktorEcosystem = ["ktorServerCore", "ktorSerializationKotlinxJson", "ktorServerContentNegotiation", "ktorServerHostCommon", "ktorServerStatusPages", "ktorServerNetty", "ktorServerConfigYaml", "logbackClassic", "ktorClientCore", "ktorClientContent", "ktorRequestValidation", "ktorRateLimit"]
 koogEcosystem = ["koogAgents", "koogTools", "koogFeatureEventHandler"]
 koinEcosystem = ["koinCore", "koinKtor", "koinLogger"]
 firebaseEcosystem = ["firebaseAdmin"]

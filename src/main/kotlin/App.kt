@@ -9,11 +9,15 @@ import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.netty.EngineMain
 import io.ktor.server.plugins.ContentTransformationException
+import io.ktor.server.plugins.ratelimit.RateLimit
+import io.ktor.server.plugins.ratelimit.RateLimitName
 import io.ktor.server.plugins.requestvalidation.RequestValidation
 import io.ktor.server.plugins.requestvalidation.RequestValidationException
 import io.ktor.server.plugins.requestvalidation.ValidationResult
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.header
 import io.ktor.server.response.respond
+import kotlin.time.Duration.Companion.hours
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
@@ -29,6 +33,19 @@ fun Application.module() {
     install(Koin) {
         slf4jLogger()
         modules(appModule)
+    }
+
+    install(RateLimit) {
+        register(RateLimitName("public_ai")) {
+            rateLimiter(limit = 20, refillPeriod = 1.hours)
+            requestKey { call ->
+                call.request.header("X-Forwarded-For")
+                    ?.substringBefore(',')
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: call.request.local.remoteHost
+            }
+        }
     }
 
     install(RequestValidation) {
