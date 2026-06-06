@@ -1,11 +1,8 @@
-package common.model.tarot
+package common.model.dream
 
 import com.google.cloud.Timestamp
 
-/**
- * Class to represent the available Tarot related services for the user
- */
-data class TarotReads(
+data class DreamReads(
     val readings: List<String> = emptyList(),
     val nextFreeReadingAt: Timestamp? = null,
 )

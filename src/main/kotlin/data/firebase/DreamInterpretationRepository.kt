@@ -1,7 +1,6 @@
 package data.firebase
 
 import com.google.cloud.Timestamp
-import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.Firestore
 import common.model.dream.LLMDreamInterpretation
 import kotlinx.coroutines.Dispatchers
@@ -18,12 +17,19 @@ class DreamInterpretationRepository(firestore: Firestore) : FirestoreRepository<
         interpretationId: String,
         interpretation: LLMDreamInterpretation,
     ) = withContext(Dispatchers.IO) {
+        // 1) Save interpretation document
         subCollection(userId, "dreams").document(interpretationId).set(interpretation)
-
-        update(userId, mapOf(
-            "dream.readingsAmount" to FieldValue.increment(-1),
-            "dream.nextFreeReadingAt" to nextFreeReadingDate(),
-        ))
+        // 2) Remove exactly one "dream" token (arrayRemove removes ALL occurrences)
+        val userRef = collection.document(userId)
+        val currentReadings = userRef.get().get()
+            .get("dream.readings")
+            ?.let { @Suppress("UNCHECKED_CAST") (it as? List<String>) }
+            ?: emptyList()
+        val updatedReadings = currentReadings.toMutableList().also { list ->
+            val index = list.indexOf("dream")
+            if (index != -1) list.removeAt(index)
+        }
+        userRef.update("dream.readings", updatedReadings).get()
     }
 
     suspend fun getLastInterpretationSummaries(userId: String, limit: Int = 3): List<String> =

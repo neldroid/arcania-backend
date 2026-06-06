@@ -1,20 +1,9 @@
 package data.firebase
 
-import com.google.cloud.Timestamp
-import com.google.cloud.firestore.FieldValue
 import com.google.cloud.firestore.Firestore
 import common.model.tarot.LLMTarotRead
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimePeriod
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 
 class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTarotRead>(
     firestore = firestore,
@@ -23,12 +12,19 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
 ) {
 
     suspend fun addReading(userId: String, readingId: String, readingType: String, reading: LLMTarotRead) = withContext(Dispatchers.IO) {
-        // 1) Add the reading
+        // 1) Add the reading document
         subCollection(userId, "readings").document(readingId).set(reading)
-        // 2) Discount a read
-        update(userId, mapOf(
-            "tarot.readings" to FieldValue.arrayRemove(readingType),
-        ))
+        // 2) Remove exactly one token from the readings array (arrayRemove removes ALL occurrences)
+        val userRef = collection.document(userId)
+        val currentReadings = userRef.get().get()
+            .get("tarot.readings")
+            ?.let { @Suppress("UNCHECKED_CAST") (it as? List<String>) }
+            ?: emptyList()
+        val updatedReadings = currentReadings.toMutableList().also { list ->
+            val index = list.indexOf(readingType)
+            if (index != -1) list.removeAt(index)
+        }
+        userRef.update("tarot.readings", updatedReadings).get()
     }
 
     suspend fun getLastReadingSummaries(userId: String, limit: Int = 3): List<String> = withContext(Dispatchers.IO) {

@@ -21,7 +21,7 @@ class DreamService(
         themes: List<String>,
         emotions: List<String>,
     ) {
-        val availableReadings = userRepository.findUser(userId)?.tarot?.readingsAmount ?: 0
+        val availableReadings = userRepository.findUser(userId)?.dream?.readings?.size ?: 0
 
         if (availableReadings == 0) {
             throw IllegalStateException("Not enough readings left")

@@ -34,12 +34,14 @@ class TarotService(
         isForAnotherPerson: Boolean = false,
     ) {
         // 0) Get the available readings for the user
-        val availableReadings = userRepository.findUser(userId)?.tarot?.readingsAmount ?: 0
+        val readingType = if (cardsQuantity == 1) "single" else "three"
+        val availableReadings = userRepository.findUser(userId)?.tarot?.readings
+            ?.count { it == readingType } ?: 0
 
         if (availableReadings == 0) {
             throw IllegalStateException("Not enough readings left")
         } else {
-            readTarot(readingId, userId, userName, cardsQuantity, question, themes, emotions, isForAnotherPerson)
+            readTarot(readingId, userId, userName, cardsQuantity, readingType, question, themes, emotions, isForAnotherPerson)
         }
     }
 
@@ -48,6 +50,7 @@ class TarotService(
         userId: String,
         userName: String,
         cardsQuantity: Int,
+        readingType: String,
         question: String,
         themes: List<String>,
         emotions: List<String>,
@@ -75,7 +78,6 @@ class TarotService(
         )
 
         // 5) Save the result in firebase
-        val readingType = if (cardsQuantity == 1) "single" else "three"
         tarotReadingRepository.addReading(
             userId = userId,
             readingId = readingId.toString(),
