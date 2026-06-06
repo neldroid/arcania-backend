@@ -2,6 +2,7 @@ package api.plugins
 
 import api.routes.bffRoutes
 import api.routes.dreamRoutes
+import api.routes.reikiRoutes
 import api.routes.stripeRoutes
 import api.routes.tarotRoutes
 import io.ktor.server.application.*
@@ -13,5 +14,6 @@ fun Application.configureRouting() {
         tarotRoutes()
         dreamRoutes()
         stripeRoutes()
+        reikiRoutes()
     }
 }

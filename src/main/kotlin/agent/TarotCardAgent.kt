@@ -14,7 +14,8 @@ object TarotReadingAgent {
         cards: List<TarotCard>,
         emotions: List<String>,
         themes: List<String>,
-        previousReadings: List<String>
+        previousReadings: List<String>,
+        isForAnotherPerson: Boolean = false,
     ): String {
         val geminiApiKey = System.getenv("GEMINI_API_KEY") ?: error("Missing env var: GEMINI_API_KEY")
 
@@ -27,6 +28,7 @@ object TarotReadingAgent {
             Role: Professional Tarot Reader AI.
             Goal: Provide reflective, empathetic, and symbolic interpretations to foster self-awareness.
             Language: Output must be in "Español Neutro" (accessible to both Spain and Latin America). Avoid regional slang (e.g., avoid "vosotros" or heavy "lunfardo"). Use "usted" or "tú" consistently based on the user's tone.
+            ${if (isForAnotherPerson) "Third-person mode: This reading is for someone other than the person asking. Do NOT address the querent directly. Refer to the subject as \"esta persona\" or \"él/ella/elle\" throughout. Never use \"tú\" or \"usted\" to address the subject." else ""}
             
             ## Constraints
             - Non-Deterministic: No "future-telling" or absolute truths. Use "possibilities," "reflections," or "guidance."
@@ -82,9 +84,8 @@ object TarotReadingAgent {
         }
 
         val contextBlock = buildString {
-            // Basic Info - Use clear headers
             appendLine("### USER_DATA")
-            appendLine("Name: $userName")
+            if (!isForAnotherPerson) appendLine("Name: $userName")
             appendLine("Query: \"$question\"")
 
             // Condensed Context

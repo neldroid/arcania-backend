@@ -22,13 +22,12 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
     clazz = LLMTarotRead::class.java,
 ) {
 
-    suspend fun addReading(userId: String, readingId: String, reading: LLMTarotRead) = withContext(Dispatchers.IO) {
+    suspend fun addReading(userId: String, readingId: String, readingType: String, reading: LLMTarotRead) = withContext(Dispatchers.IO) {
         // 1) Add the reading
         subCollection(userId, "readings").document(readingId).set(reading)
         // 2) Discount a read
         update(userId, mapOf(
-            "tarot.readingsAmount" to FieldValue.increment(-1),
-            "tarot.nextFreeReadingAt" to nextFreeReadingDate(),
+            "tarot.readings" to FieldValue.arrayRemove(readingType),
         ))
     }
 

@@ -61,7 +61,7 @@ class TarotService(
         val cards: List<TarotCard> = TarotCardHelper.getCards(cardsQuantity)
 
         // 3) Get the reading answer from the agent
-        val read = TarotReadingAgent.readCards(userName, question, cards, emotions, themes, previousReadings)
+        val read = TarotReadingAgent.readCards(userName, question, cards, emotions, themes, previousReadings, isForAnotherPerson)
 
         val parsed = try {
             Json.decodeFromString<LLMTarotRead>(sanitizeJson(read))
@@ -75,9 +75,11 @@ class TarotService(
         )
 
         // 5) Save the result in firebase
+        val readingType = if (cardsQuantity == 1) "single" else "three"
         tarotReadingRepository.addReading(
             userId = userId,
             readingId = readingId.toString(),
+            readingType = readingType,
             reading = llmTarotRead,
         )
     }
