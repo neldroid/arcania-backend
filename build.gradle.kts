@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.bundles.koogEcosystem)
     implementation(libs.bundles.firebaseEcosystem)
     implementation(libs.stripe)
+    implementation(libs.kotlinLogging)
 
     testImplementation(kotlin("test"))
 }

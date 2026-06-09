@@ -15,6 +15,7 @@ firebaseAdmin = "9.8.0"
 firestore = "26.1.2"
 stripe = "29.1.0"
 shadow = "8.3.10"
+kotlinLogging = "7.0.0"
 
 [libraries]
 kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
@@ -53,6 +54,7 @@ koinLogger = { module = "io.insert-koin:koin-logger-slf4j", version.ref = "koin"
 firebaseAdmin = { module = "com.google.firebase:firebase-admin", version.ref = "firebaseAdmin" }
 firebaseFirestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firestore" }
 stripe = { module = "com.stripe:stripe-java", version.ref = "stripe" }
+kotlinLogging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlinLogging" }
 [bundles]
 kotlinxEcosystem = ["kotlinxSerialization", "kotlinxCoroutines"]
 databaseEcosystem = ["postgresql", "h2", "exposedCore", "exposedJdbc", "exposedDao", "exposedDatetime"]

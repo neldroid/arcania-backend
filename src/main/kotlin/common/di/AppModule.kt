@@ -1,15 +1,25 @@
 package common.di
 
+import agent.llm.GeminiLLMProvider
+import agent.llm.LLMProvider
+import agent.parsing.LLMResponseParser
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.firestore.Firestore
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.cloud.FirestoreClient
-import data.firebase.DreamInterpretationRepository
-import data.firebase.TarotReadingRepository
-import data.firebase.UserRepository
-import domain.dream.DreamService
-import domain.tarot.TarotService
+import common.config.AppConfig
+import data.firebase.FirestoreDreamInterpretationRepository
+import data.firebase.FirestoreStripeEventRepository
+import data.firebase.FirestoreTarotReadingRepository
+import data.firebase.FirestoreUserRepository
+import domain.repository.DreamInterpretationRepository
+import domain.repository.StripeEventRepository
+import domain.repository.TarotReadingRepository
+import domain.repository.UserRepository
+import domain.usecase.CreateTarotReadingUseCase
+import domain.usecase.InterpretDreamUseCase
+import domain.usecase.ProcessStripeEventUseCase
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -18,36 +28,33 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import java.io.ByteArrayInputStream
-
-private fun loadFirebaseCredentials(): GoogleCredentials {
-    val serviceAccountJson = System.getenv("FIREBASE_SERVICE_ACCOUNT")
-        ?: error("FIREBASE_SERVICE_ACCOUNT environment variable is not set")
-    return GoogleCredentials.fromStream(
-        ByteArrayInputStream(serviceAccountJson.toByteArray())
-    )
-}
+import kotlin.time.Duration.Companion.seconds
 
 val appModule = module {
+
+    single { AppConfig.fromEnv() }
+
     single<FirebaseApp> {
         if (FirebaseApp.getApps().isNotEmpty()) {
             FirebaseApp.getInstance()
         } else {
-            val credentials = loadFirebaseCredentials()
-            val options = FirebaseOptions.builder()
-                .setCredentials(credentials)
-                .build()
-            FirebaseApp.initializeApp(options)
+            val cfg = get<AppConfig>()
+            val credentials = GoogleCredentials.fromStream(
+                ByteArrayInputStream(cfg.firebaseServiceAccount.toByteArray())
+            )
+            FirebaseApp.initializeApp(
+                FirebaseOptions.builder().setCredentials(credentials).build()
+            )
         }
     }
 
-    // Inject specific Firebase services you need
     single<Firestore> {
-        get<FirebaseApp>() // ensures FirebaseApp is initialized first
+        get<FirebaseApp>()
         FirestoreClient.getFirestore()
     }
 
     single {
-        HttpClient(CIO){
+        HttpClient(CIO) {
             install(ContentNegotiation) {
                 json(Json {
                     ignoreUnknownKeys = true
@@ -55,26 +62,32 @@ val appModule = module {
                 })
             }
             install(HttpTimeout) {
-                requestTimeoutMillis = 120_000  // 2 minutes
+                requestTimeoutMillis = 120_000
                 connectTimeoutMillis = 10_000
                 socketTimeoutMillis = 120_000
             }
         }
     }
 
-    /* Add repositories injection
-    Ex.: single<Repository> {RepositoryImpl()}
-    */
-    single { TarotReadingRepository(get<Firestore>()) }
-    single { DreamInterpretationRepository(get<Firestore>()) }
-    single { UserRepository(get<Firestore>()) }
-    /* Add use cases injection
-    Ex.: single { UseCase() }
-     */
-    single { TarotService(get<TarotReadingRepository>(), get<UserRepository>()) }
-    single { DreamService(get<DreamInterpretationRepository>(), get<UserRepository>()) }
+    // LLM provider — swap GeminiLLMProvider for AnthropicLLMProvider here, nothing else changes.
+    single<LLMProvider> {
+        val cfg = get<AppConfig>()
+        GeminiLLMProvider(
+            apiKey = cfg.geminiApiKey,
+            timeout = cfg.llmTimeoutSeconds.seconds,
+        )
+    }
 
-    /* Add Notifiers
-    Ex.: single { Notifier() }
-     */
+    single { LLMResponseParser() }
+
+    // Repositories
+    single<TarotReadingRepository> { FirestoreTarotReadingRepository(get()) }
+    single<DreamInterpretationRepository> { FirestoreDreamInterpretationRepository(get()) }
+    single<UserRepository> { FirestoreUserRepository(get()) }
+    single<StripeEventRepository> { FirestoreStripeEventRepository(get()) }
+
+    // Use cases
+    single { CreateTarotReadingUseCase(get(), get(), get(), get()) }
+    single { InterpretDreamUseCase(get(), get(), get(), get()) }
+    single { ProcessStripeEventUseCase(get(), get()) }
 }
