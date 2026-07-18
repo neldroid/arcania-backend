@@ -11,9 +11,9 @@ object TarotReadingAgent {
     suspend fun readCards(
         userName: String,
         question: String,
+        readingName: String,
+        readingGuidance: String,
         cards: List<TarotCard>,
-        emotions: List<String>,
-        themes: List<String>,
         previousReadings: List<String>,
         isForAnotherPerson: Boolean = false,
     ): String {
@@ -40,7 +40,11 @@ object TarotReadingAgent {
             2. Synthesis: Identify patterns, contrasts, and card relationships. Do not interpret in isolation.
             3. Personalization: Integrate optional user context subtly (e.g., "This may relate to...").
             4. Guidance: Offer reflective perspectives, not commands.
-            
+
+            ## Reading Spread: $readingName
+            $readingGuidance
+            Honor the meaning of each card's position (provided in SPREAD_DATA) — every position has a specific role in this spread.
+
             ## Output Format (STRICT)
             - Return ONLY the JSON object.
             - NO preamble, NO postscript, NO "R-I" blocks, and NO explanations of your reasoning.
@@ -86,14 +90,8 @@ object TarotReadingAgent {
         val contextBlock = buildString {
             appendLine("### USER_DATA")
             if (!isForAnotherPerson) appendLine("Name: $userName")
-            appendLine("Query: \"$question\"")
-
-            // Condensed Context
-            if (themes.isNotEmpty() || emotions.isNotEmpty()) {
-                val themeStr = themes.joinToString().takeIf { it.isNotEmpty() } ?: "None"
-                val emotionStr = emotions.joinToString().takeIf { it.isNotEmpty() } ?: "None"
-                appendLine("Context: [Themes: $themeStr | Emotions: $emotionStr]")
-            }
+            if (question.isNotBlank()) appendLine("Query: \"$question\"") else appendLine("Query: (none — open reading, no specific question asked)")
+            appendLine("Spread: $readingName")
 
             // Previous Readings - Keep only the core theme to save tokens
             if (previousReadings.isNotEmpty()) {

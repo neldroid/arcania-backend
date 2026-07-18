@@ -1,0 +1,153 @@
+{
+  "info": {
+    "name": "Arcania — Tarot BFF",
+    "_postman_id": "a1b2c3d4-0000-4000-8000-arcaniatarot1",
+    "description": "Exercises the public tarot BFF endpoint `POST {{baseUrl}}/tarot/reading` with different readingIds.\n\n## Contract\nBody (`UserReadingRequest`):\n```\n{ \"userId\": string, \"userName\": string?, \"readingId\": string, \"question\": string, \"isForAnotherPerson\": boolean }\n```\nResponse (`ReadTarotResponse`): `{ \"responseId\": \"SUCCESS\"|\"ERROR\", \"readingId\": string }` with HTTP 200.\n\n## Important: this endpoint is fire-and-forget\nThe route returns 200 + a fresh `readingId` as soon as the request is *accepted*. The actual reading (Gemini call + Firestore write) runs in the background AFTER the response is sent. So:\n- A 200/SUCCESS means \"accepted\", NOT \"reading generated\".\n- Entitlement (`tarot.readings` must contain the readingId) and LLM/parse failures happen async — they only appear in server logs, never in this HTTP response.\n- To confirm a reading actually completed, read Firestore `users/{{userId}}/readings/{readingId}` after a few seconds.\n\n## Rate limit\nThe public route is limited to 20 requests / hour per IP (keyed on X-Forwarded-For). Running the whole collection repeatedly will start returning 429.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "https://arcania-backend.onrender.com", "type": "string" },
+    { "key": "userId", "value": "REPLACE_WITH_A_REAL_USER_ID", "type": "string" },
+    { "key": "userName", "value": "Nahuel", "type": "string" },
+    { "key": "lastReadingId", "value": "", "type": "string" }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level assertions that apply to every VALID reading request.",
+          "// Requests that intentionally send bad input override these in their own tab.",
+          "if (pm.request.url.getPath().endsWith('/tarot/reading') && !pm.request.name.includes('invalid') && !pm.request.name.includes('missing')) {",
+          "  pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+          "  pm.test('responseId is SUCCESS', function () {",
+          "    pm.expect(pm.response.json().responseId).to.eql('SUCCESS');",
+          "  });",
+          "  pm.test('returns a readingId', function () {",
+          "    const id = pm.response.json().readingId;",
+          "    pm.expect(id, 'readingId').to.be.a('string').and.not.empty;",
+          "    pm.collectionVariables.set('lastReadingId', id);",
+          "    console.log('readingId =', id, '\\u2192 verify Firestore users/' + pm.collectionVariables.get('userId') + '/readings/' + id);",
+          "  });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "single — 1 card (present)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/tarot/reading", "host": ["{{baseUrl}}"], "path": ["tarot", "reading"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"userName\": \"{{userName}}\",\n  \"readingId\": \"single\",\n  \"question\": \"¿Qué energía define mi día de hoy?\",\n  \"isForAnotherPerson\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "three — past/present/future",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/tarot/reading", "host": ["{{baseUrl}}"], "path": ["tarot", "reading"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"userName\": \"{{userName}}\",\n  \"readingId\": \"three\",\n  \"question\": \"¿Hacia dónde va mi situación laboral?\",\n  \"isForAnotherPerson\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "key — 8 cards (unblocking)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/tarot/reading", "host": ["{{baseUrl}}"], "path": ["tarot", "reading"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"userName\": \"{{userName}}\",\n  \"readingId\": \"key\",\n  \"question\": \"¿Qué está bloqueando mi camino y cómo lo abro?\",\n  \"isForAnotherPerson\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "shadow — 3 cards (shadow work)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/tarot/reading", "host": ["{{baseUrl}}"], "path": ["tarot", "reading"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"userName\": \"{{userName}}\",\n  \"readingId\": \"shadow\",\n  \"question\": \"¿Qué estoy evitando mirar de mí?\",\n  \"isForAnotherPerson\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "celtic-cross — 6 cards (isForAnotherPerson)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/tarot/reading", "host": ["{{baseUrl}}"], "path": ["tarot", "reading"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"userName\": \"{{userName}}\",\n  \"readingId\": \"celtic-cross\",\n  \"question\": \"¿Cómo evoluciona la situación de mi hermana?\",\n  \"isForAnotherPerson\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "invalid readingId — expect error",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// The unknown-readingId check lives on the internal /read-cards route (RequestValidation).",
+              "// The BFF does not forward that 400 status: it tries to deserialize the internal error body",
+              "// as ReadTarotResponse, which fails, so this surfaces as a 5xx from the BFF rather than a clean 400.",
+              "pm.test('does not return a successful reading', function () {",
+              "  pm.expect(pm.response.code, 'http status').to.not.eql(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/tarot/reading", "host": ["{{baseUrl}}"], "path": ["tarot", "reading"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"userName\": \"{{userName}}\",\n  \"readingId\": \"not-a-real-reading\",\n  \"question\": \"¿Esto debería fallar?\",\n  \"isForAnotherPerson\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "missing readingId — expect 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// UserReadingRequest.readingId is required (no default), so kotlinx rejects the body",
+              "// at deserialization on the BFF itself → handled by ContentTransformation → 400.",
+              "pm.test('status is 400', function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "{{baseUrl}}/tarot/reading", "host": ["{{baseUrl}}"], "path": ["tarot", "reading"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"userName\": \"{{userName}}\",\n  \"question\": \"Falta el readingId\",\n  \"isForAnotherPerson\": false\n}"
+        }
+      }
+    }
+  ]
+}

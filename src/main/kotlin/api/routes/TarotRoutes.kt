@@ -9,7 +9,6 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.application.*
 import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
 import java.util.*
@@ -23,6 +22,21 @@ fun Route.tarotRoutes() {
             val request = call.receive<ReadTarotRequest>()
             val readingId = UUID.randomUUID()
 
+            // Verify the user actually has a credit for this reading BEFORE
+            // responding — only once that's confirmed do we tell the client
+            // "success" and let the LLM call + Firestore write run in the
+            // background. This is the one part of the flow worth the wait:
+            // it's a single Firestore read, not the slow agent call.
+            val credit = try {
+                tarotService.resolveCredit(request.userId, request.readingType)
+            } catch (exception: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, ReadTarotResponse(responseId = ResponseType.ERROR))
+                return@get
+            } catch (exception: IllegalStateException) {
+                call.respond(HttpStatusCode.PaymentRequired, ReadTarotResponse(responseId = ResponseType.ERROR))
+                return@get
+            }
+
             call.respond(
                 HttpStatusCode.Accepted,
                 ReadTarotResponse(responseId = ResponseType.SUCCESS, readingId.toString())
@@ -30,14 +44,12 @@ fun Route.tarotRoutes() {
 
             application.launch {
                 try {
-                    tarotService.retrieveTarotReading(
+                    tarotService.generateReading(
                         readingId = readingId,
                         userId = request.userId,
                         userName = request.userName,
-                        cardsQuantity = request.cardsQuantity,
+                        credit = credit,
                         question = request.question,
-                        themes = request.themes,
-                        emotions = request.emotions,
                         isForAnotherPerson = request.isForAnotherPerson,
                     )
                 } catch (exception: Exception) {

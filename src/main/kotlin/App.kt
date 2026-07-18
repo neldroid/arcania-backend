@@ -3,6 +3,7 @@ import api.plugins.configureSerialization
 import api.routes.request.InterpretDreamRequest
 import api.routes.request.ReadTarotRequest
 import common.di.appModule
+import domain.tarot.ReadingCatalog
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
@@ -52,10 +53,10 @@ fun Application.module() {
         validate<ReadTarotRequest> { request ->
             val errors = mutableListOf<String>()
 
-            if (request.cardsQuantity !in listOf(1, 3)) {
-                errors.add("cardsQuantity must be 1 or 3")
-            }
-            if (request.question.isBlank()) {
+            val definition = ReadingCatalog.get(request.readingType)
+            if (definition == null) {
+                errors.add("unknown readingId: ${request.readingType}")
+            } else if (definition.questionRequired && request.question.isBlank()) {
                 errors.add("question is required and cannot be empty")
             }
 

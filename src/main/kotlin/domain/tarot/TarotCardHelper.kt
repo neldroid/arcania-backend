@@ -330,29 +330,24 @@ object TarotDeck {
 
 object TarotCardHelper {
 
-    fun getCards(cardsQuantity: Int): List<TarotCard> {
-        require(cardsQuantity > 0) { "cardsQuantity must be > 0" }
-        require(cardsQuantity <= TarotDeck.cards.size) { "Not enough cards in deck" }
-
-        val positions = generatePositions(cardsQuantity)
+    /**
+     * Draws one card per position, in order. The number of cards dealt is the
+     * size of [positions], which comes from the reading's [ReadingDefinition]
+     * — the deck never trusts a client-supplied count.
+     */
+    fun getCards(positions: List<String>): List<TarotCard> {
+        require(positions.isNotEmpty()) { "positions must not be empty" }
+        require(positions.size <= TarotDeck.cards.size) { "Not enough cards in deck" }
 
         return TarotDeck.cards
             .shuffled()
-            .take(cardsQuantity)
+            .take(positions.size)
             .mapIndexed { index, card ->
                 card.copy(
                     isReversed = kotlin.random.Random.nextBoolean(),
                     position = positions[index]
                 )
             }
-    }
-
-    private fun generatePositions(count: Int): List<String> {
-        return when (count) {
-            1 -> listOf("Present")
-            3 -> listOf("Past", "Present", "Future")
-            else -> (1..count).map { "Position $it" }
-        }
     }
 
 }

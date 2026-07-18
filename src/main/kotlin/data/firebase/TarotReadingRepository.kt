@@ -11,7 +11,12 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
     clazz = LLMTarotRead::class.java,
 ) {
 
-    suspend fun addReading(userId: String, readingId: String, readingType: String, reading: LLMTarotRead) = withContext(Dispatchers.IO) {
+    /**
+     * @param creditToken The exact token in tarot.readings that covered this reading —
+     * either the reading's catalog id (a real purchase), its FREE_<TYPE> flag, or FULL_FREE.
+     * Whichever one it is gets consumed here.
+     */
+    suspend fun addReading(userId: String, readingId: String, creditToken: String, reading: LLMTarotRead) = withContext(Dispatchers.IO) {
         // 1) Add the reading document
         subCollection(userId, "readings").document(readingId).set(reading)
         // 2) Remove exactly one token from the readings array (arrayRemove removes ALL occurrences)
@@ -21,7 +26,7 @@ class TarotReadingRepository(firestore: Firestore) : FirestoreRepository<LLMTaro
             ?.let { @Suppress("UNCHECKED_CAST") (it as? List<String>) }
             ?: emptyList()
         val updatedReadings = currentReadings.toMutableList().also { list ->
-            val index = list.indexOf(readingType)
+            val index = list.indexOf(creditToken)
             if (index != -1) list.removeAt(index)
         }
         userRef.update("tarot.readings", updatedReadings).get()

@@ -38,28 +38,15 @@ fun Route.bffRoutes() {
                         ReadTarotRequest(
                             userId = userRequest.userId,
                             userName = userRequest.userName ?: "",
-                            cardsQuantity = userRequest.cardsQuantity,
+                            readingType = userRequest.readingId,
                             question = userRequest.question,
-                            themes = userRequest.themes ?: emptyList(),
-                            emotions = userRequest.emotions ?: emptyList(),
                             isForAnotherPerson = userRequest.isForAnotherPerson,
                         )
                     )
                 }
 
                 val reading = internalResponse.body<ReadTarotResponse>()
-                call.respond(HttpStatusCode.OK, reading)
-            }
-
-            post("/key") {
-                // Reading for the "KEY" pay Tarot
-                val userRequest = call.receive<UserReadingRequest>()
-
-//            val internalResponse = httpClient.get("http://localhost:8080/read-cards") {
-//                header("X-Api-Key", System.getenv("TAROT_API_KEY"))
-//                contentType(ContentType.Application.Json)
-//                setBody()
-//            }
+                call.respond(internalResponse.status, reading)
             }
         }
 

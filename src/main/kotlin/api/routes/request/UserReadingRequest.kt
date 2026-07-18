@@ -6,9 +6,7 @@ import kotlinx.serialization.Serializable
 data class UserReadingRequest(
     val userId: String,
     val userName: String? = null,
-    val cardsQuantity: Int,
-    val question: String,
-    val themes: List<String>? = null,
-    val emotions: List<String>? = null,
+    val readingId: String,
+    val question: String = "",
     val isForAnotherPerson: Boolean = false,
 )

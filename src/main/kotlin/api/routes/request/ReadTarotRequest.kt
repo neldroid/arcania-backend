@@ -6,17 +6,7 @@ import kotlinx.serialization.Serializable
 data class ReadTarotRequest(
     val userId: String,
     val userName: String,
-    val question: String,
-    val themes: List<String>,
-    val emotions: List<String>,
-    val cardsQuantity: Int,
+    val readingType: String,
+    val question: String = "",
     val isForAnotherPerson: Boolean = false,
-)
-
-
-@Serializable
-data class ReadTarotKeyRequest(
-    val userId: String,
-    val userName: String,
-    val question: String,
 )

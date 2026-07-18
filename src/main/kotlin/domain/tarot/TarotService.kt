@@ -13,58 +13,79 @@ class TarotService(
     private val userRepository: UserRepository,
 ) {
 
-    /**
-     * Call this function to get a new card/s reading.
-     *
-     * @param cardsQuantity The amount of cards to retrieve (1 or 3)
-     * @param question The user question
-     * @param themes The selected themes
-     * @param emotions List of chosen emotions. Ex. ["seeking clarity"]
-     *
-     * @return the created reading ID
-     */
-    suspend fun retrieveTarotReading(
-        readingId: UUID,
-        userId: String,
-        userName: String,
-        cardsQuantity: Int,
-        question: String,
-        themes: List<String>,
-        emotions: List<String>,
-        isForAnotherPerson: Boolean = false,
-    ) {
-        // 0) Get the available readings for the user
-        val readingType = if (cardsQuantity == 1) "single" else "three"
-        val availableReadings = userRepository.findUser(userId)?.tarot?.readings
-            ?.count { it == readingType } ?: 0
-
-        if (availableReadings == 0) {
-            throw IllegalStateException("Not enough readings left")
-        } else {
-            readTarot(readingId, userId, userName, cardsQuantity, readingType, question, themes, emotions, isForAnotherPerson)
-        }
+    companion object {
+        /** Granted to every new user on signup; redeemable on any one reading. See services/userService.ts (frontend). */
+        private const val FULL_FREE_FLAG = "FULL_FREE"
     }
 
-    private suspend fun readTarot(
+    /** What [resolveCredit] found: the reading to generate and the token that pays for it. */
+    data class ReadingCredit(val definition: ReadingDefinition, val creditToken: String)
+
+    /**
+     * Resolves the reading definition and finds which credit token covers it,
+     * WITHOUT consuming it or generating anything. Callers must await this
+     * — and only respond "success" to the client once it returns — so an
+     * unentitled or unknown-reading request never gets a premature success;
+     * the actual LLM call + Firestore write ([generateReading]) can then run
+     * safely in the background after that.
+     *
+     * Priority mirrors getRedeemableFreeFlag in the frontend's lib/pricing.ts:
+     * a purchased token matching the reading type first (so a real purchase
+     * is spent before a free credit is), then its type-specific free-promo
+     * flag, then the generic FULL_FREE flag.
+     *
+     * @throws IllegalArgumentException if readingType isn't a known reading
+     * @throws IllegalStateException if the user has no credit for it
+     */
+    suspend fun resolveCredit(userId: String, readingType: String): ReadingCredit {
+        val definition = ReadingCatalog.get(readingType)
+            ?: throw IllegalArgumentException("Unknown reading type: $readingType")
+
+        val userReadings = userRepository.findUser(userId)?.tarot?.readings ?: emptyList()
+        val freeFlag = freeReadingFlag(readingType)
+        val creditToken = userReadings.firstOrNull { it.equals(readingType, ignoreCase = true) }
+            ?: userReadings.firstOrNull { it.equals(freeFlag, ignoreCase = true) }
+            ?: userReadings.firstOrNull { it.equals(FULL_FREE_FLAG, ignoreCase = true) }
+            ?: throw IllegalStateException("Not enough readings left")
+
+        return ReadingCredit(definition, creditToken)
+    }
+
+    /** "the-path" -> "FREE_THE_PATH", "key" -> "FREE_KEY" */
+    private fun freeReadingFlag(readingType: String): String =
+        "FREE_${readingType.uppercase().replace("-", "_")}"
+
+    /**
+     * Generates and stores the reading for a credit already confirmed by
+     * [resolveCredit]. The BE is the sole owner of consuming that credit
+     * token: it's removed from tarot.readings once the reading is saved.
+     */
+    suspend fun generateReading(
         readingId: UUID,
         userId: String,
         userName: String,
-        cardsQuantity: Int,
-        readingType: String,
+        credit: ReadingCredit,
         question: String,
-        themes: List<String>,
-        emotions: List<String>,
         isForAnotherPerson: Boolean = false,
     ) {
+        val (definition, creditToken) = credit
         // 1) Get the previous readings for the userId (skip if reading is for another person)
         val previousReadings: List<String> = if (isForAnotherPerson) emptyList()
         else tarotReadingRepository.getLastReadingSummaries(userId)
 
-        // 2) Get the card/s for this session
-        val cards: List<TarotCard> = TarotCardHelper.getCards(cardsQuantity)
+        // 2) Get the card/s for this session, one per spread position
+        val cards: List<TarotCard> = TarotCardHelper.getCards(definition.positions)
 
         // 3) Get the reading answer from the agent
-        val read = TarotReadingAgent.readCards(userName, question, cards, emotions, themes, previousReadings, isForAnotherPerson)
+        val read = TarotReadingAgent.readCards(
+            userName = userName,
+            question = question,
+            readingName = definition.displayName,
+            readingGuidance = definition.promptGuidance,
+            cards = cards,
+            previousReadings = previousReadings,
+            isForAnotherPerson = isForAnotherPerson,
+        )
 
         val parsed = try {
             Json.decodeFromString<LLMTarotRead>(sanitizeJson(read))
@@ -77,11 +98,11 @@ class TarotService(
             createdAt = Timestamp.now()
         )
 
-        // 5) Save the result in firebase
+        // 5) Save the result in firebase and consume the credit token that covered it
         tarotReadingRepository.addReading(
             userId = userId,
             readingId = readingId.toString(),
-            readingType = readingType,
+            creditToken = creditToken,
             reading = llmTarotRead,
         )
     }

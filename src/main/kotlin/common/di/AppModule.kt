@@ -18,13 +18,21 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import java.io.ByteArrayInputStream
+import java.io.File
 
 private fun loadFirebaseCredentials(): GoogleCredentials {
-    val serviceAccountJson = System.getenv("FIREBASE_SERVICE_ACCOUNT")
+    val value = System.getenv("FIREBASE_SERVICE_ACCOUNT")
         ?: error("FIREBASE_SERVICE_ACCOUNT environment variable is not set")
-    return GoogleCredentials.fromStream(
-        ByteArrayInputStream(serviceAccountJson.toByteArray())
-    )
+
+    // Accept either the raw service-account JSON (how prod/Render supplies it)
+    // or a path to a JSON file (convenient locally, where pasting multi-line
+    // JSON into a run config mangles the private_key newlines).
+    val stream = if (value.trimStart().startsWith("{")) {
+        ByteArrayInputStream(value.toByteArray())
+    } else {
+        File(value).inputStream()
+    }
+    return GoogleCredentials.fromStream(stream)
 }
 
 val appModule = module {
