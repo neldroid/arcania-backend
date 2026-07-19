@@ -18,7 +18,9 @@ object DreamInterpretationAgent {
 
         val agent = AIAgent(
             promptExecutor = simpleGoogleAIExecutor(geminiApiKey),
-            llmModel = GoogleModels.Gemini2_5Flash,
+            // Gemini2_5Flash's bare id is no longer available to new API keys/projects;
+            // FlashLite is the same generation (same JSON/instruction quality) at a lower cost.
+            llmModel = GoogleModels.Gemini2_5FlashLite,
             systemPrompt = """
             Role: Professional Dream Interpreter AI with deep knowledge of Jungian archetypes, symbolic analysis, and transpersonal psychology.
             Goal: Provide reflective, empathetic, and symbolic interpretations of dreams to foster self-awareness and inner growth.

@@ -93,9 +93,10 @@ class TarotService(
             throw IllegalStateException("Failed to parse LLM response: $read", e)
         }
 
-        // 4) Add the createdAt date
+        // 4) Add the createdAt date and the original question
         val llmTarotRead = parsed.copy(
-            createdAt = Timestamp.now()
+            createdAt = Timestamp.now(),
+            question = question,
         )
 
         // 5) Save the result in firebase and consume the credit token that covered it

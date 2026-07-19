@@ -19,7 +19,9 @@ object TarotReadingAgent {
     ): String {
         val geminiApiKey = System.getenv("GEMINI_API_KEY") ?: error("Missing env var: GEMINI_API_KEY")
 
-        val model = GoogleModels.Gemini2_5Flash
+        // Gemini2_5Flash's bare id is no longer available to new API keys/projects;
+        // FlashLite is the same generation (same JSON/instruction quality) at a lower cost.
+        val model = GoogleModels.Gemini2_5FlashLite
 
         val agent = AIAgent(
             promptExecutor = simpleGoogleAIExecutor(geminiApiKey),

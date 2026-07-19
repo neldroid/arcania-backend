@@ -37,7 +37,11 @@ fun Route.stripeRoutes() {
                 if (userId != null) {
                     when (productType) {
                         "tarot" -> if (readingId != null) {
-                            userRepository.update(userId, mapOf("tarot.readings" to FieldValue.arrayUnion(readingId)))
+                            // Not arrayUnion: Firestore's arrayUnion de-dupes by value, so a
+                            // second purchase of the same reading type would silently grant
+                            // no extra credit. Appending the raw list preserves one token per purchase.
+                            val currentReadings = userRepository.findUser(userId)?.tarot?.readings ?: emptyList()
+                            userRepository.update(userId, mapOf("tarot.readings" to currentReadings + readingId))
                         }
                         "reiki" -> {
                             userRepository.update(userId, mapOf("reiki.appointmentsAmount" to FieldValue.increment(1)))

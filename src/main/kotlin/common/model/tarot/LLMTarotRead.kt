@@ -12,6 +12,7 @@ data class LLMTarotRead(
     val synthesis: String = "",
     val guidance: String = "",
     val summary: String = "",
+    val question: String = "",
     @Contextual val createdAt: Timestamp? = null,
 )
 
