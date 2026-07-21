@@ -4,6 +4,9 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
+import ai.koog.prompt.llm.LLMCapability
+import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.llm.LLModel
 import domain.tarot.TarotCard
 
 object TarotReadingAgent {
@@ -21,7 +24,18 @@ object TarotReadingAgent {
 
         // Gemini2_5Flash's bare id is no longer available to new API keys/projects;
         // FlashLite is the same generation (same JSON/instruction quality) at a lower cost.
-        val model = GoogleModels.Gemini2_5FlashLite
+        val model = LLModel(
+            provider = LLMProvider.Google,
+            id = "gemini-3.1-flash-lite",
+            capabilities = listOf( LLMCapability.Temperature,
+                LLMCapability.Completion,
+                LLMCapability.MultipleChoices,LLMCapability.Tools,
+                LLMCapability.ToolChoice,
+                LLMCapability.Schema.JSON.Basic,
+                LLMCapability.Schema.JSON.Standard),
+            contextLength = 1_048_576,
+            maxOutputTokens = 65_536,
+        )
 
         val agent = AIAgent(
             promptExecutor = simpleGoogleAIExecutor(geminiApiKey),
