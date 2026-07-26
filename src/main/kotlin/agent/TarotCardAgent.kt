@@ -21,7 +21,7 @@ object TarotReadingAgent {
 
         val agent = AIAgent(
             promptExecutor = simpleOpenAIExecutor(openAiApiKey),
-            llmModel = OpenAIModels.Chat.GPT4oMini,
+            llmModel = OpenAIModels.Chat.GPT4_1Mini,
             systemPrompt = """
             Role: Professional Tarot Reader AI.
             Goal: Provide reflective, empathetic, and symbolic interpretations to foster self-awareness.
