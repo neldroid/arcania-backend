@@ -1,5 +1,6 @@
 package api.plugins
 
+import api.routes.adminRoutes
 import api.routes.bffRoutes
 import api.routes.dreamRoutes
 import api.routes.reikiRoutes
@@ -15,5 +16,6 @@ fun Application.configureRouting() {
         dreamRoutes()
         stripeRoutes()
         reikiRoutes()
+        adminRoutes()
     }
 }

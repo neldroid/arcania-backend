@@ -209,3 +209,13 @@ object ReadingCatalog {
     /** Returns the reading definition for [id], or null if the id is unknown. */
     fun get(id: String): ReadingDefinition? = byId[id]
 }
+
+/**
+ * The free-promo credit token for a given reading type, mirrored from
+ * getFreeReadingFlag in the frontend's lib/pricing.ts — the two must stay in
+ * sync, since this is the exact string stored in a user's tarot.readings array.
+ *
+ * "the-path" -> "FREE_THE_PATH", "key" -> "FREE_KEY"
+ */
+fun freeReadingFlag(readingType: String): String =
+    "FREE_${readingType.uppercase().replace("-", "_")}"

@@ -51,10 +51,6 @@ class TarotService(
         return ReadingCredit(definition, creditToken)
     }
 
-    /** "the-path" -> "FREE_THE_PATH", "key" -> "FREE_KEY" */
-    private fun freeReadingFlag(readingType: String): String =
-        "FREE_${readingType.uppercase().replace("-", "_")}"
-
     /**
      * Generates and stores the reading for a credit already confirmed by
      * [resolveCredit]. The BE is the sole owner of consuming that credit

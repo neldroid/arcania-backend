@@ -8,8 +8,10 @@ import com.google.firebase.cloud.FirestoreClient
 import data.firebase.DreamInterpretationRepository
 import data.firebase.TarotReadingRepository
 import data.firebase.UserRepository
+import domain.campaign.FreeReadingCampaignService
 import domain.dream.DreamService
 import domain.tarot.TarotService
+import email.ResendEmailClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpTimeout
@@ -85,4 +87,6 @@ val appModule = module {
     /* Add Notifiers
     Ex.: single { Notifier() }
      */
+    single { ResendEmailClient(get<HttpClient>()) }
+    single { FreeReadingCampaignService(get<UserRepository>(), get<ResendEmailClient>()) }
 }

@@ -1,7 +1,7 @@
 package api.routes
 
+import api.plugins.appJson
 import com.google.cloud.firestore.FieldValue
-import com.stripe.model.checkout.Session
 import com.stripe.net.Webhook
 import data.firebase.UserRepository
 import io.ktor.http.HttpStatusCode
@@ -10,6 +10,9 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.koin.ktor.ext.inject
 
 fun Route.stripeRoutes() {
@@ -29,10 +32,18 @@ fun Route.stripeRoutes() {
             }
 
             if (event.type == "checkout.session.completed") {
-                val session = event.dataObjectDeserializer.`object`.orElse(null) as? Session
-                val userId = session?.metadata?.get("userId")
-                val productType = session?.metadata?.get("productType")
-                val readingId = session?.metadata?.get("readingId")
+                // The event's Stripe API version is newer than this SDK, so the typed
+                // dataObjectDeserializer.getObject() returns an empty Optional. We only
+                // need the checkout metadata, so read it straight from the raw payload —
+                // this stays correct regardless of the Stripe API/SDK version gap.
+                val metadata = appJson.parseToJsonElement(payload)
+                    .jsonObject["data"]?.jsonObject
+                    ?.get("object")?.jsonObject
+                    ?.get("metadata")?.jsonObject
+
+                val userId = metadata?.get("userId")?.jsonPrimitive?.contentOrNull
+                val productType = metadata?.get("productType")?.jsonPrimitive?.contentOrNull
+                val readingId = metadata?.get("readingId")?.jsonPrimitive?.contentOrNull
 
                 if (userId != null) {
                     when (productType) {
