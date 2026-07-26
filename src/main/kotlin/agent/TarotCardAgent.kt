@@ -2,11 +2,8 @@ package agent
 
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.features.eventHandler.feature.handleEvents
-import ai.koog.prompt.executor.clients.google.GoogleModels
-import ai.koog.prompt.executor.llms.all.simpleGoogleAIExecutor
-import ai.koog.prompt.llm.LLMCapability
-import ai.koog.prompt.llm.LLMProvider
-import ai.koog.prompt.llm.LLModel
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 import domain.tarot.TarotCard
 
 object TarotReadingAgent {
@@ -20,26 +17,11 @@ object TarotReadingAgent {
         previousReadings: List<String>,
         isForAnotherPerson: Boolean = false,
     ): String {
-        val geminiApiKey = System.getenv("GEMINI_API_KEY") ?: error("Missing env var: GEMINI_API_KEY")
-
-        // Gemini2_5Flash's bare id is no longer available to new API keys/projects;
-        // FlashLite is the same generation (same JSON/instruction quality) at a lower cost.
-        val model = LLModel(
-            provider = LLMProvider.Google,
-            id = "gemini-3.1-flash-lite",
-            capabilities = listOf( LLMCapability.Temperature,
-                LLMCapability.Completion,
-                LLMCapability.MultipleChoices,LLMCapability.Tools,
-                LLMCapability.ToolChoice,
-                LLMCapability.Schema.JSON.Basic,
-                LLMCapability.Schema.JSON.Standard),
-            contextLength = 1_048_576,
-            maxOutputTokens = 65_536,
-        )
+        val openAiApiKey = System.getenv("OPENAI_API_KEY") ?: error("Missing env var: OPENAI_API_KEY")
 
         val agent = AIAgent(
-            promptExecutor = simpleGoogleAIExecutor(geminiApiKey),
-            llmModel = model,
+            promptExecutor = simpleOpenAIExecutor(openAiApiKey),
+            llmModel = OpenAIModels.Chat.GPT4oMini,
             systemPrompt = """
             Role: Professional Tarot Reader AI.
             Goal: Provide reflective, empathetic, and symbolic interpretations to foster self-awareness.
