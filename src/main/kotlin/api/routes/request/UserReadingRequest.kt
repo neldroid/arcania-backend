@@ -9,4 +9,6 @@ data class UserReadingRequest(
     val readingId: String,
     val question: String = "",
     val isForAnotherPerson: Boolean = false,
+    val topic: String? = null,
+    val subtopic: String? = null,
 )

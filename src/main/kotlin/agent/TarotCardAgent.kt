@@ -4,6 +4,7 @@ import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.features.eventHandler.feature.handleEvents
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+import common.model.tarot.QuestionAnalysis
 import domain.tarot.TarotCard
 
 object TarotReadingAgent {
@@ -16,8 +17,29 @@ object TarotReadingAgent {
         cards: List<TarotCard>,
         previousReadings: List<String>,
         isForAnotherPerson: Boolean = false,
+        analysis: QuestionAnalysis = QuestionAnalysis.NEUTRAL,
     ): String {
         val openAiApiKey = System.getenv("OPENAI_API_KEY") ?: error("Missing env var: OPENAI_API_KEY")
+
+        // Language variant + tone/theme framing come from the intake analysis
+        // (see agent/QuestionIntakeAgent). They tune HOW the reading speaks
+        // without changing the output contract.
+        val languageDirective = when (analysis.languageVariant.trim().lowercase()) {
+            "es-es" -> "Write in Spanish from Spain (España): \"vosotros\" and Peninsular vocabulary are welcome. Mirror the querent's register."
+            "es-419" -> "Write in Latin American Spanish (español latinoamericano): use \"ustedes\", avoid \"vosotros\" and Peninsular slang. Mirror the querent's register."
+            else -> "Write in \"Español Neutro\", accessible to both Spain and Latin America. Avoid regional slang and \"vosotros\"."
+        }
+        val readerAdaptation = buildString {
+            if (analysis.tone.isNotBlank()) {
+                appendLine("- Emotional tone detected: \"${analysis.tone}\". Hold and mirror this register with empathy.")
+            }
+            if (analysis.isThemeMismatch) {
+                appendLine("- The querent selected a theme that does not match their actual question. Gently follow what they truly asked about; do not force the selected theme.")
+            }
+            if (analysis.isLowQuality) {
+                appendLine("- The question is very thin or ambiguous. Offer an open, gentle reflection and invite clarity — do not invent specifics.")
+            }
+        }.ifBlank { "- No special adaptation needed." }
 
         val agent = AIAgent(
             promptExecutor = simpleOpenAIExecutor(openAiApiKey),
@@ -25,8 +47,11 @@ object TarotReadingAgent {
             systemPrompt = """
             Role: Professional Tarot Reader AI.
             Goal: Provide reflective, empathetic, and symbolic interpretations to foster self-awareness.
-            Language: Output must be in "Español Neutro" (accessible to both Spain and Latin America). Avoid regional slang (e.g., avoid "vosotros" or heavy "lunfardo"). Use "usted" or "tú" consistently based on the user's tone.
+            Language: $languageDirective Use "usted" or "tú" consistently based on the querent's tone.
             ${if (isForAnotherPerson) "Third-person mode: This reading is for someone other than the person asking. Do NOT address the querent directly. Refer to the subject as \"esta persona\" or \"él/ella/elle\" throughout. Never use \"tú\" or \"usted\" to address the subject." else ""}
+
+            ## Reader Adaptation (from intake analysis)
+            $readerAdaptation
             
             ## Constraints
             - Non-Deterministic: No "future-telling" or absolute truths. Use "possibilities," "reflections," or "guidance."

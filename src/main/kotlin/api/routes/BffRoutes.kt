@@ -41,6 +41,8 @@ fun Route.bffRoutes() {
                             readingType = userRequest.readingId,
                             question = userRequest.question,
                             isForAnotherPerson = userRequest.isForAnotherPerson,
+                            topic = userRequest.topic,
+                            subtopic = userRequest.subtopic,
                         )
                     )
                 }

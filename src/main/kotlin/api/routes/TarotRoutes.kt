@@ -37,6 +37,26 @@ fun Route.tarotRoutes() {
                 return@get
             }
 
+            // Inspect the input before committing to a reading. This is a second
+            // synchronous step worth the wait: it lets us reject junk/joke input
+            // up front — no credit is consumed (consumption only happens inside
+            // generateReading) and the client gets actionable feedback instead of
+            // a nonsense reading. Fail-open: analyzeQuestion never throws.
+            val analysis = tarotService.analyzeQuestion(
+                question = request.question,
+                topic = request.topic,
+                subtopic = request.subtopic,
+                isForAnotherPerson = request.isForAnotherPerson,
+            )
+
+            if (analysis.isTrash) {
+                call.respond(
+                    HttpStatusCode.UnprocessableEntity,
+                    ReadTarotResponse(responseId = ResponseType.INVALID_INPUT)
+                )
+                return@get
+            }
+
             call.respond(
                 HttpStatusCode.Accepted,
                 ReadTarotResponse(responseId = ResponseType.SUCCESS, readingId.toString())
@@ -51,6 +71,7 @@ fun Route.tarotRoutes() {
                         credit = credit,
                         question = request.question,
                         isForAnotherPerson = request.isForAnotherPerson,
+                        analysis = analysis,
                     )
                 } catch (exception: Exception) {
                     println("Background processing failed: ${exception.message}")

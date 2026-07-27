@@ -10,5 +10,5 @@ data class ReadTarotResponse(
 
 
 enum class ResponseType {
-    SUCCESS, ERROR
+    SUCCESS, ERROR, INVALID_INPUT
 }

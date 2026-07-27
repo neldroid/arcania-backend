@@ -1,8 +1,10 @@
 package domain.tarot
 
+import agent.QuestionIntakeAgent
 import agent.TarotReadingAgent
 import com.google.cloud.Timestamp
 import common.model.tarot.LLMTarotRead
+import common.model.tarot.QuestionAnalysis
 import data.firebase.TarotReadingRepository
 import data.firebase.UserRepository
 import kotlinx.serialization.json.Json
@@ -52,6 +54,31 @@ class TarotService(
     }
 
     /**
+     * Inspects the querent's input before generating anything (see
+     * [QuestionIntakeAgent]). The route awaits this and rejects junk/joke input
+     * up front so no credit is spent; the same result is then fed into the
+     * reading agent to steer language variant, tone and framing. Fail-open: any
+     * problem yields [QuestionAnalysis.NEUTRAL], never a wrongful rejection.
+     */
+    suspend fun analyzeQuestion(
+        question: String,
+        topic: String?,
+        subtopic: String?,
+        isForAnotherPerson: Boolean,
+    ): QuestionAnalysis {
+        val selectedTheme = listOfNotNull(
+            topic?.takeIf { it.isNotBlank() },
+            subtopic?.takeIf { it.isNotBlank() },
+        ).joinToString(" / ").ifBlank { null }
+
+        return QuestionIntakeAgent.analyze(
+            question = question,
+            selectedTheme = selectedTheme,
+            isForAnotherPerson = isForAnotherPerson,
+        )
+    }
+
+    /**
      * Generates and stores the reading for a credit already confirmed by
      * [resolveCredit]. The BE is the sole owner of consuming that credit
      * token: it's removed from tarot.readings once the reading is saved.
@@ -63,6 +90,7 @@ class TarotService(
         credit: ReadingCredit,
         question: String,
         isForAnotherPerson: Boolean = false,
+        analysis: QuestionAnalysis = QuestionAnalysis.NEUTRAL,
     ) {
         val (definition, creditToken) = credit
         // 1) Get the previous readings for the userId (skip if reading is for another person)
@@ -81,6 +109,7 @@ class TarotService(
             cards = cards,
             previousReadings = previousReadings,
             isForAnotherPerson = isForAnotherPerson,
+            analysis = analysis,
         )
 
         val parsed = try {
