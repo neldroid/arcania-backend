@@ -1,11 +1,13 @@
 package api.routes
 
+import api.verifiedUid
 import api.routes.request.InterpretDreamRequest
 import api.routes.request.ReadTarotRequest
 import api.routes.request.UserDreamRequest
 import api.routes.request.UserReadingRequest
 import api.routes.response.InterpretDreamResponse
 import api.routes.response.ReadTarotResponse
+import api.routes.response.ResponseType
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -21,14 +23,18 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import com.google.firebase.FirebaseApp
 import org.koin.ktor.ext.inject
 
 fun Route.bffRoutes() {
     val httpClient by inject<HttpClient>()
+    val firebaseApp by inject<FirebaseApp>()
 
     rateLimit(RateLimitName("public_ai")) {
         route("/tarot") {
             post("/reading") {
+                val uid = call.verifiedUid(firebaseApp)
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized, ReadTarotResponse(responseId = ResponseType.ERROR))
                 val userRequest = call.receive<UserReadingRequest>()
 
                 val internalResponse = httpClient.get("http://localhost:8080/read-cards") {
@@ -36,7 +42,7 @@ fun Route.bffRoutes() {
                     contentType(ContentType.Application.Json)
                     setBody(
                         ReadTarotRequest(
-                            userId = userRequest.userId,
+                            userId = uid,
                             userName = userRequest.userName ?: "",
                             readingType = userRequest.readingId,
                             question = userRequest.question,
@@ -54,6 +60,8 @@ fun Route.bffRoutes() {
 
         route("/dream") {
             post("/interpretation") {
+                val uid = call.verifiedUid(firebaseApp)
+                    ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Unauthorized"))
                 val userRequest = call.receive<UserDreamRequest>()
 
                 val internalResponse = httpClient.get("http://localhost:8080/interpret-dream") {
@@ -61,7 +69,7 @@ fun Route.bffRoutes() {
                     contentType(ContentType.Application.Json)
                     setBody(
                         InterpretDreamRequest(
-                            userId = userRequest.userId,
+                            userId = uid,
                             userName = userRequest.userName ?: "",
                             dreamDescription = userRequest.dreamDescription,
                             themes = userRequest.themes ?: emptyList(),

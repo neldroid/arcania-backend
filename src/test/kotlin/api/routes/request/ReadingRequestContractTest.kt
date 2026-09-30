@@ -41,6 +41,14 @@ class ReadingRequestContractTest {
     }
 
     @Test
+    fun `userId is optional because the uid comes from the ID token`() {
+        val body = """{ "readingId": "single", "question": "¿Y hoy?" }"""
+        val request = json.decodeFromString<UserReadingRequest>(body)
+
+        assertEquals(null, request.userId)
+    }
+
+    @Test
     fun `missing readingId is rejected`() {
         val body = """{ "userId": "u_1", "question": "?" }"""
         assertFailsWith<Exception> { json.decodeFromString<UserReadingRequest>(body) }
