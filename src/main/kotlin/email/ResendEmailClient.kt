@@ -7,6 +7,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
@@ -35,6 +36,7 @@ class ResendEmailClient(private val httpClient: HttpClient) {
         val subject: String,
         val html: String,
         val headers: Map<String, String>? = null,
+        @SerialName("reply_to") val replyTo: String? = null,
     )
 
     /** @return true if Resend accepted the email for delivery. */
@@ -43,11 +45,12 @@ class ResendEmailClient(private val httpClient: HttpClient) {
         subject: String,
         html: String,
         headers: Map<String, String>? = null,
+        replyTo: String? = null,
     ): Boolean {
         val response = httpClient.post("https://api.resend.com/emails") {
             header("Authorization", "Bearer $apiKey")
             contentType(ContentType.Application.Json)
-            setBody(ResendEmailRequest(from = fromAddress, to = listOf(to), subject = subject, html = html, headers = headers))
+            setBody(ResendEmailRequest(from = fromAddress, to = listOf(to), subject = subject, html = html, headers = headers, replyTo = replyTo))
         }
         return response.status.isSuccess()
     }

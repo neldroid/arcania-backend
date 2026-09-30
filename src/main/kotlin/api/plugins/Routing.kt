@@ -7,6 +7,7 @@ import api.routes.emailRoutes
 import api.routes.reikiRoutes
 import api.routes.stripeRoutes
 import api.routes.tarotRoutes
+import api.routes.withdrawalRoutes
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
@@ -19,5 +20,6 @@ fun Application.configureRouting() {
         reikiRoutes()
         adminRoutes()
         emailRoutes()
+        withdrawalRoutes()
     }
 }
