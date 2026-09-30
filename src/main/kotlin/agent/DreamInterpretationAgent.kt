@@ -61,7 +61,7 @@ object DreamInterpretationAgent {
             handleEvents {
                 onLLMCallStarting { request ->
                     val timestamp = java.time.Instant.now()
-                    println("[$timestamp] LLM_START | Model: ${request.model.id} | User: $userName")
+                    println("[$timestamp] LLM_START | Model: ${request.model.id}")
                 }
 
                 onLLMCallCompleted { context ->

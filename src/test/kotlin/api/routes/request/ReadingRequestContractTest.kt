@@ -49,6 +49,15 @@ class ReadingRequestContractTest {
     }
 
     @Test
+    fun `sensitive data consent defaults to false and is read when sent`() {
+        val without = json.decodeFromString<UserReadingRequest>("""{ "readingId": "single" }""")
+        val with = json.decodeFromString<UserReadingRequest>("""{ "readingId": "single", "sensitiveDataConsent": true }""")
+
+        assertEquals(false, without.sensitiveDataConsent)
+        assertEquals(true, with.sensitiveDataConsent)
+    }
+
+    @Test
     fun `missing readingId is rejected`() {
         val body = """{ "userId": "u_1", "question": "?" }"""
         assertFailsWith<Exception> { json.decodeFromString<UserReadingRequest>(body) }

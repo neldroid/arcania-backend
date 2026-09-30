@@ -51,7 +51,8 @@ class DreamService(
         val parsed = try {
             Json.decodeFromString<LLMDreamInterpretation>(sanitizeJson(raw))
         } catch (e: Exception) {
-            throw IllegalStateException("Failed to parse LLM response: $raw", e)
+            // The raw output holds the interpretation, and this message ends up in the logs.
+            throw IllegalStateException("Failed to parse LLM response (${raw.length} chars)", e)
         }
 
         dreamRepository.addInterpretation(

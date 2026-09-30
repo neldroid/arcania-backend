@@ -24,11 +24,20 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import com.google.firebase.FirebaseApp
+import com.google.cloud.firestore.FieldValue
+import data.firebase.UserRepository
 import org.koin.ktor.ext.inject
+
+/**
+ * Date of the consent wording in esoterico-frontend/lib/legal.ts
+ * (AI_DISCLOSURE.sensitiveConsent). Bump both together when the text changes.
+ */
+private const val SENSITIVE_DATA_CONSENT_VERSION = "2026-09-30"
 
 fun Route.bffRoutes() {
     val httpClient by inject<HttpClient>()
     val firebaseApp by inject<FirebaseApp>()
+    val userRepository by inject<UserRepository>()
 
     rateLimit(RateLimitName("public_ai")) {
         route("/tarot") {
@@ -36,6 +45,26 @@ fun Route.bffRoutes() {
                 val uid = call.verifiedUid(firebaseApp)
                     ?: return@post call.respond(HttpStatusCode.Unauthorized, ReadTarotResponse(responseId = ResponseType.ERROR))
                 val userRequest = call.receive<UserReadingRequest>()
+
+                // Explicit consent is the only art. 9 GDPR basis that fits a
+                // free-text question about someone's health or love life, so no
+                // reading is written without it.
+                if (!userRequest.sensitiveDataConsent) {
+                    return@post call.respond(HttpStatusCode.BadRequest, ReadTarotResponse(responseId = ResponseType.ERROR))
+                }
+                // Art. 7.1 GDPR: be able to show when, and to which wording,
+                // consent was given. Best-effort — the reading doesn't wait on it.
+                runCatching {
+                    userRepository.update(
+                        uid,
+                        mapOf(
+                            "consents.sensitiveData" to mapOf(
+                                "grantedAt" to FieldValue.serverTimestamp(),
+                                "version" to SENSITIVE_DATA_CONSENT_VERSION,
+                            )
+                        ),
+                    )
+                }.onFailure { println("Could not record sensitive-data consent: ${it.javaClass.simpleName}") }
 
                 val internalResponse = httpClient.get("http://localhost:8080/read-cards") {
                     header("X-Api-Key", System.getenv("TAROT_API_KEY"))

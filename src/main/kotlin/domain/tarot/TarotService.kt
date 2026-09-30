@@ -115,7 +115,8 @@ class TarotService(
         val parsed = try {
             Json.decodeFromString<LLMTarotRead>(sanitizeJson(read))
         } catch (e: Exception) {
-            throw IllegalStateException("Failed to parse LLM response: $read", e)
+            // The raw output holds the reading, and this message ends up in the logs.
+            throw IllegalStateException("Failed to parse LLM response (${read.length} chars)", e)
         }
 
         // 4) Add the createdAt date and the original question

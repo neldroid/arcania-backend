@@ -99,7 +99,7 @@ object TarotReadingAgent {
                         request ->
                     // Log the intent and model to track performance per model type
                     val timestamp = java.time.Instant.now()
-                    println("[$timestamp] LLM_START | Model: ${request.model.id} | User: $userName")
+                    println("[$timestamp] LLM_START | Model: ${request.model.id}")
                 }
 
                 onLLMCallCompleted { context ->
