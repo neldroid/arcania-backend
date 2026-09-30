@@ -34,14 +34,20 @@ class ResendEmailClient(private val httpClient: HttpClient) {
         val to: List<String>,
         val subject: String,
         val html: String,
+        val headers: Map<String, String>? = null,
     )
 
     /** @return true if Resend accepted the email for delivery. */
-    suspend fun send(to: String, subject: String, html: String): Boolean {
+    suspend fun send(
+        to: String,
+        subject: String,
+        html: String,
+        headers: Map<String, String>? = null,
+    ): Boolean {
         val response = httpClient.post("https://api.resend.com/emails") {
             header("Authorization", "Bearer $apiKey")
             contentType(ContentType.Application.Json)
-            setBody(ResendEmailRequest(from = fromAddress, to = listOf(to), subject = subject, html = html))
+            setBody(ResendEmailRequest(from = fromAddress, to = listOf(to), subject = subject, html = html, headers = headers))
         }
         return response.status.isSuccess()
     }

@@ -6,6 +6,7 @@ import domain.tarot.ReadingCatalog
 import domain.tarot.freeReadingFlag
 import email.FreeReadingEmailTemplate
 import email.ResendEmailClient
+import email.UnsubscribeLinks
 import kotlinx.serialization.Serializable
 
 /** Recognized values for [FreeReadingCampaignService.run]'s `filter` param. */
@@ -19,6 +20,8 @@ data class CampaignResult(
     val matched: Int,
     val emailed: Int,
     val failedUserIds: List<String>,
+    /** Matched the filter but objected to marketing email, so were skipped. */
+    val skippedOptedOut: Int = 0,
 )
 
 /**
@@ -41,7 +44,7 @@ class FreeReadingCampaignService(
 
         val candidates = when (filter) {
             CampaignFilter.NO_READINGS -> userRepository.findAll()
-                .filter { it.tarot?.readings.isNullOrEmpty() && it.email.isNotBlank() }
+                .filter { it.tarot?.readings.isNullOrEmpty() && !it.email.isNullOrBlank() }
             else -> throw IllegalArgumentException("Unknown filter: $filter")
         }
 
@@ -50,14 +53,24 @@ class FreeReadingCampaignService(
         val failed = mutableListOf<String>()
         var emailed = 0
 
-        for (user in candidates) {
+        // Marketing email relies on art. 21.2 LSSI (existing customers, similar
+        // products), which only holds while the person hasn't objected.
+        val optedOut = candidates.count { it.marketingOptOut }
+
+        for (user in candidates.filterNot { it.marketingOptOut }) {
             userRepository.update(user.userId, mapOf("tarot.readings" to FieldValue.arrayUnion(freeFlag)))
 
             val sent = try {
                 emailClient.send(
                     to = user.email,
                     subject = FreeReadingEmailTemplate.subject(reading),
-                    html = FreeReadingEmailTemplate.html(userName = user.name, reading = reading, ctaUrl = ctaUrl),
+                    html = FreeReadingEmailTemplate.html(
+                        userName = user.userName.ifBlank { user.name },
+                        reading = reading,
+                        ctaUrl = ctaUrl,
+                        unsubscribeUrl = UnsubscribeLinks.urlFor(user.userId),
+                    ),
+                    headers = UnsubscribeLinks.headersFor(user.userId),
                 )
             } catch (e: Exception) {
                 false
@@ -66,6 +79,11 @@ class FreeReadingCampaignService(
             if (sent) emailed++ else failed.add(user.userId)
         }
 
-        return CampaignResult(matched = candidates.size, emailed = emailed, failedUserIds = failed)
+        return CampaignResult(
+            matched = candidates.size,
+            emailed = emailed,
+            failedUserIds = failed,
+            skippedOptedOut = optedOut,
+        )
     }
 }

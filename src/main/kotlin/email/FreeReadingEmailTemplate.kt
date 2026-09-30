@@ -13,8 +13,28 @@ object FreeReadingEmailTemplate {
     fun subject(reading: ReadingDefinition): String =
         "Un regalo para ti: ${reading.displayName}, gratis ✨"
 
-    fun html(userName: String, reading: ReadingDefinition, ctaUrl: String): String {
-        val greeting = if (userName.isNotBlank()) "Hola, $userName." else "Hola."
+    /**
+     * Who sends it and where they are. CAN-SPAM requires a valid postal address
+     * in every commercial email, and art. 20 LSSI that the sender be clearly
+     * identifiable. Keep in sync with esoterico-frontend/lib/legal.ts.
+     */
+    private const val SENDER =
+        "Gisela Elizabeth Fernández Lemos (Ezepiko) · Calle Marquesa de Villa Antonia, 4, piso 4E, 28343 Valdemoro (Madrid), España"
+
+    /** userName is client-written profile data, so it never goes into HTML raw. */
+    private fun escapeHtml(value: String): String = buildString {
+        for (char in value) when (char) {
+            '&' -> append("&amp;")
+            '<' -> append("&lt;")
+            '>' -> append("&gt;")
+            '"' -> append("&quot;")
+            '\'' -> append("&#39;")
+            else -> append(char)
+        }
+    }
+
+    fun html(userName: String, reading: ReadingDefinition, ctaUrl: String, unsubscribeUrl: String): String {
+        val greeting = if (userName.isNotBlank()) "Hola, ${escapeHtml(userName)}." else "Hola."
 
         return """
             <!doctype html>
@@ -39,7 +59,7 @@ object FreeReadingEmailTemplate {
                           </h1>
                           <p style="margin:0; font-size:14px; line-height:1.8; color:#b9aecf;">
                             $greeting Te regalamos una lectura de <strong style="color:#f4eef9;">${reading.displayName}</strong>,
-                            completamente gratis. Sin costo, sin compromiso — solo tú, las cartas, y lo que necesités ver hoy.
+                            completamente gratis. Sin coste, sin compromiso — solo tú, las cartas y lo que necesites ver hoy.
                           </p>
                         </td>
                       </tr>
@@ -59,13 +79,17 @@ object FreeReadingEmailTemplate {
                             Hacer mi lectura gratis →
                           </a>
                           <p style="margin: 20px 0 0 0; font-size:12px; color:#7a6f95;">
-                            Tu lectura ya está acreditada en tu cuenta — solo tenés que entrar y usarla.
+                            Tu lectura ya está acreditada en tu cuenta — solo tienes que entrar y usarla.
                           </p>
                         </td>
                       </tr>
                     </table>
                     <p style="max-width:560px; margin: 24px 0 0 0; font-size:11px; line-height:1.6; color:#7a6f95;">
-                      Recibiste este correo porque tenés una cuenta en Magesatika.
+                      Recibes este correo porque tienes una cuenta en Magestika.
+                      <a href="$unsubscribeUrl" style="color:#b9aecf; text-decoration:underline;">Darme de baja de estos emails</a>.
+                    </p>
+                    <p style="max-width:560px; margin: 8px 0 0 0; font-size:11px; line-height:1.6; color:#7a6f95;">
+                      $SENDER
                     </p>
                   </td>
                 </tr>

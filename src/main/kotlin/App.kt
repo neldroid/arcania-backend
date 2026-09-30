@@ -6,6 +6,7 @@ import common.di.appModule
 import domain.tarot.ReadingCatalog
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.application.log
 import io.ktor.server.netty.EngineMain
@@ -39,13 +40,11 @@ fun Application.module() {
     install(RateLimit) {
         register(RateLimitName("public_ai")) {
             rateLimiter(limit = 20, refillPeriod = 1.hours)
-            requestKey { call ->
-                call.request.header("X-Forwarded-For")
-                    ?.substringBefore(',')
-                    ?.trim()
-                    ?.takeIf { it.isNotEmpty() }
-                    ?: call.request.local.remoteHost
-            }
+            requestKey { call -> call.clientIp() }
+        }
+        register(RateLimitName("public_email")) {
+            rateLimiter(limit = 30, refillPeriod = 1.hours)
+            requestKey { call -> call.clientIp() }
         }
     }
 
@@ -103,3 +102,11 @@ fun Application.module() {
     configureSerialization()
     configureRouting()
 }
+
+/** Client IP behind Render's proxy, used as the rate-limit key. */
+private fun ApplicationCall.clientIp(): String =
+    request.header("X-Forwarded-For")
+        ?.substringBefore(',')
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?: request.local.remoteHost

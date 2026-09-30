@@ -3,6 +3,7 @@ package api.plugins
 import api.routes.adminRoutes
 import api.routes.bffRoutes
 import api.routes.dreamRoutes
+import api.routes.emailRoutes
 import api.routes.reikiRoutes
 import api.routes.stripeRoutes
 import api.routes.tarotRoutes
@@ -17,5 +18,6 @@ fun Application.configureRouting() {
         stripeRoutes()
         reikiRoutes()
         adminRoutes()
+        emailRoutes()
     }
 }
